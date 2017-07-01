@@ -84,40 +84,43 @@
 
 
 
-<meta name="description" content="Hexo简介要求
+<meta name="description" content="Hexo简介Hexo是一款基于Node.js的博客框架.
+要求
 Docker
 Shell(Optional)
 
 目标
 利用Docker构建Hexo博客,做到宿主机不需要Nodejs,git等工具也能运行Hexo,建立自己的博客.
-在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完场)
+在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完成)
 
-构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的Hexo镜像.Dockerfile如下所示.安装c">
+构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的He">
 <meta property="og:type" content="article">
 <meta property="og:title" content="利用Docker构建Hexo博客">
 <meta property="og:url" content="http://www.xi-xi.xyz/2016/12/31/利用Docker构建Hexo博客/index.html">
 <meta property="og:site_name" content="这是一个博客">
-<meta property="og:description" content="Hexo简介要求
+<meta property="og:description" content="Hexo简介Hexo是一款基于Node.js的博客框架.
+要求
 Docker
 Shell(Optional)
 
 目标
 利用Docker构建Hexo博客,做到宿主机不需要Nodejs,git等工具也能运行Hexo,建立自己的博客.
-在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完场)
+在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完成)
 
-构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的Hexo镜像.Dockerfile如下所示.安装c">
+构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的He">
 <meta property="og:updated_time" content="2016-12-31T11:42:57.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="利用Docker构建Hexo博客">
-<meta name="twitter:description" content="Hexo简介要求
+<meta name="twitter:description" content="Hexo简介Hexo是一款基于Node.js的博客框架.
+要求
 Docker
 Shell(Optional)
 
 目标
 利用Docker构建Hexo博客,做到宿主机不需要Nodejs,git等工具也能运行Hexo,建立自己的博客.
-在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完场)
+在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完成)
 
-构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的Hexo镜像.Dockerfile如下所示.安装c">
+构建Hexo镜像由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的He">
 
 
 
@@ -197,7 +200,7 @@ Shell(Optional)
     </a>
   </div>
     
-      <p class="site-subtitle"></p>
+      <p class="site-subtitle">真的是一个博客</p>
     
 </div>
 
@@ -381,13 +384,14 @@ Shell(Optional)
       
 
       
-        <h2 id="Hexo简介"><a href="#Hexo简介" class="headerlink" title="Hexo简介"></a>Hexo简介</h2><h2 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h2><ol>
+        <h2 id="Hexo简介"><a href="#Hexo简介" class="headerlink" title="Hexo简介"></a>Hexo简介</h2><p><a href="https://hexo.io/zh-cn/" target="_blank" rel="external">Hexo</a>是一款基于Node.js的博客框架.</p>
+<h2 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h2><ol>
 <li>Docker</li>
 <li>Shell(Optional)</li>
 </ol>
 <h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><ol>
 <li>利用Docker构建Hexo博客,做到宿主机不需要Nodejs,git等工具也能运行Hexo,建立自己的博客.</li>
-<li>在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完场)</li>
+<li>在写好文章之后,运行一条命令,实现自动部署到GitHub pages.(还未完成)</li>
 </ol>
 <h2 id="构建Hexo镜像"><a href="#构建Hexo镜像" class="headerlink" title="构建Hexo镜像"></a>构建Hexo镜像</h2><p>由于没有官方的Hexo,我们基于官方Nodejs镜像,构建我们的Hexo镜像.Dockerfile如下所示.安装cnpm是因为不可描述的某些原因,外国友人或者翻墙的可以讲Dockerfile中的第三,第四步注释掉.</p>
  <figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#基于官方NodeJS tag为7.3</span></div><div class="line"><span class="keyword">FROM</span> node:<span class="number">7.3</span></div><div class="line"></div><div class="line"><span class="comment">#设置环境变量BLOG_DIR</span></div><div class="line"><span class="keyword">ENV</span> BLOG_DIR /blog</div><div class="line"></div><div class="line"><span class="comment">#安装cnpm</span></div><div class="line"><span class="keyword">RUN</span> npm install -g cnpm --registry=https://registry.npm.taobao.org</div><div class="line"></div><div class="line"><span class="comment">#移除npm命令,并用cnpm狸猫换太子</span></div><div class="line"><span class="keyword">RUN</span> rm /usr/local/bin/npm</div><div class="line"><span class="keyword">RUN</span> ln -s /usr/local/bin/cnpm /usr/local/bin/npm</div><div class="line"></div><div class="line"><span class="comment">#安装hexo</span></div><div class="line"><span class="keyword">RUN</span> npm install -g hexo-cli</div><div class="line"></div><div class="line"><span class="comment">#建立博客目录</span></div><div class="line"><span class="keyword">RUN</span> mkdir $BLOG_DIR</div><div class="line"></div><div class="line"><span class="comment">#利用hexo init 命令初始化博客</span></div><div class="line"><span class="keyword">RUN</span>  hexo init $BLOG_DIR</div><div class="line"><span class="keyword">RUN</span>  cd #OLG_DIR &amp;&amp; npm install</div><div class="line"></div><div class="line"><span class="comment">#安装hexo-deployer-git</span></div><div class="line"><span class="keyword">RUN</span> npm install hexo-deployer-git --save</div><div class="line"></div><div class="line"><span class="comment">#设置git的Email和user</span></div><div class="line"><span class="keyword">RUN</span> git config --global user.name "OrezzerO"</div><div class="line"><span class="keyword">RUN</span> git config --global user.email "orezsilence@163.com"</div><div class="line"></div><div class="line"><span class="comment">#挂载博客所在的卷以及.ssh文件夹</span></div><div class="line"><span class="keyword">VOLUME</span> ["$BLOG_DIR","/root/.ssh"]</div><div class="line"></div><div class="line"><span class="comment">#设置工作目录</span></div><div class="line"><span class="keyword">WORKDIR</span> $BLOG_DIR</div><div class="line"></div><div class="line"><span class="comment">#暴露4000端口</span></div><div class="line"><span class="keyword">EXPOSE</span> <span class="number">4000</span></div><div class="line"></div><div class="line"><span class="comment">#设置运行镜像的默认命令</span></div><div class="line"><span class="keyword">CMD</span> ["hexo","server"]</div></pre></td></tr></table></figure>
@@ -400,10 +404,12 @@ Shell(Optional)
 <h2 id="执行hexo命令"><a href="#执行hexo命令" class="headerlink" title="执行hexo命令"></a>执行hexo命令</h2><p>容器启动之后我们可以就可以运行hexo命令了,具体的命令可以查看 <a href="https://hexo.io/" target="_blank" rel="external">Hexo.io</a>,他的右上角可以切换语言,切换了之后可以查看中文文档.然后我们利用docker运行hexo命令:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker exec hexo #hexoCommand</div></pre></td></tr></table></figure></p>
 <p>例如:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docerk exec hexo hexo new my-new-post</div></pre></td></tr></table></figure></p>
 <p>每次输入这么长的命令比较麻烦,还容易出错,我写了一个简单的脚本来简化这个过程:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">#!/bin/bash</div><div class="line"></div><div class="line">#输出要执行的命令</div><div class="line">echo &quot;hexo $@&quot;</div><div class="line">#执行命令</div><div class="line">docker exec hexo hexo $@</div></pre></td></tr></table></figure></p>
-<p>这个脚本在/myBlog文件夹中有(todo…现在还没有).</p>
 <p>这样,我们就能愉快的使用hexo来写博客了.</p>
-<h2 id="关联Github-Pages"><a href="#关联Github-Pages" class="headerlink" title="关联Github Pages"></a>关联Github Pages</h2><p>这个网上有一堆教程,可自行搜索,我有时间补充</p>
-<h2 id="域名注册和绑定"><a href="#域名注册和绑定" class="headerlink" title="域名注册和绑定"></a>域名注册和绑定</h2><p>同上.</p>
+<h2 id="关联Github-Pages"><a href="#关联Github-Pages" class="headerlink" title="关联Github Pages"></a>关联Github Pages</h2><ol>
+<li>注册Github账号</li>
+<li>建立名为<code>Github用户名.github.io</code>的代码仓库</li>
+<li>编辑<code>/myBolg/_config.yml</code>文件,</li>
+</ol>
 
       
     </div>
@@ -495,7 +501,7 @@ Shell(Optional)
                src="/images/avatar.gif"
                alt="Orez" />
           <p class="site-author-name" itemprop="name">Orez</p>
-          <p class="site-description motion-element" itemprop="description"></p>
+          <p class="site-description motion-element" itemprop="description">description</p>
         </div>
         <nav class="site-state motion-element">
         
@@ -555,7 +561,7 @@ Shell(Optional)
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hexo简介"><span class="nav-number">1.</span> <span class="nav-text">Hexo简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#要求"><span class="nav-number">2.</span> <span class="nav-text">要求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#目标"><span class="nav-number">3.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构建Hexo镜像"><span class="nav-number">4.</span> <span class="nav-text">构建Hexo镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建Hexo-Docker容器"><span class="nav-number">5.</span> <span class="nav-text">创建Hexo Docker容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行hexo命令"><span class="nav-number">6.</span> <span class="nav-text">执行hexo命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关联Github-Pages"><span class="nav-number">7.</span> <span class="nav-text">关联Github Pages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#域名注册和绑定"><span class="nav-number">8.</span> <span class="nav-text">域名注册和绑定</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hexo简介"><span class="nav-number">1.</span> <span class="nav-text">Hexo简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#要求"><span class="nav-number">2.</span> <span class="nav-text">要求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#目标"><span class="nav-number">3.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构建Hexo镜像"><span class="nav-number">4.</span> <span class="nav-text">构建Hexo镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建Hexo-Docker容器"><span class="nav-number">5.</span> <span class="nav-text">创建Hexo Docker容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行hexo命令"><span class="nav-number">6.</span> <span class="nav-text">执行hexo命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关联Github-Pages"><span class="nav-number">7.</span> <span class="nav-text">关联Github Pages</span></a></li></ol></div>
             
 
           </div>
