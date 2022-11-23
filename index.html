@@ -145,7 +145,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/23/hello-world/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/23/Create-a-blog/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -159,7 +159,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/11/23/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
+            <a href="/2022/11/23/Create-a-blog/" class="post-title-link" itemprop="url">创建一个自己的博客</a>
         </h2>
 
         <div class="post-meta">
@@ -168,8 +168,9 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2022-11-23 06:46:46" itemprop="dateCreated datePublished" datetime="2022-11-23T06:46:46+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 06:55:58 / Modified: 07:14:31" itemprop="dateCreated datePublished" datetime="2022-11-23T06:55:58+00:00">2022-11-23</time>
             </span>
 
           
@@ -183,19 +184,20 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>几年前就搭建了自己的 Github Page, 但当时搭建的时候, 博客文章没有上传到 Github, 只上传了生成的静态文件,而且没有自动部署的能力.准备重新提笔写博客,就重新搭一套.</p>
+<h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><p>这次搭博客有如下技术目标:</p>
+<ol>
+<li>搭建完成之后,只依赖 <strong>文本编辑</strong>+<strong>git</strong> 就能完成写作, 不需要其他依赖(尤其是node依赖)</li>
+<li>文本内容上传 Github 之后<strong>自动部署</strong>.</li>
+<li>任何其他人能够方便复刻这一套方案.</li>
+</ol>
+<h1 id="快速复刻本项目"><a href="#快速复刻本项目" class="headerlink" title="快速复刻本项目"></a>快速复刻本项目</h1><h2 id="创建站点"><a href="#创建站点" class="headerlink" title="创建站点"></a>创建站点</h2><p>如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork 本项目,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.</p>
+<p>在你的仓库中进入 Settings &gt; Pages &gt; Source，并将 branch 改为 gh-pages。</p>
+<p>删除 <code>source/_posts</code> (这里面是我的文章).</p>
+<h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><p>在 <code>source/_posts</code> 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 创建一个自己的博客</span><br><span class="line">date: 2022-11-23 06:55:58</span><br><span class="line">tags:</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+<p>这个头部后面就可以书写正文了.</p>
 
       
     </div>
@@ -240,123 +242,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2022-11-23 05:13:39 / Modified: 06:46:46" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/23/test/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="John Doe">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Hexo">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/23/test/" class="post-title-link" itemprop="url">test</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2022-11-23 05:13:39 / Modified: 06:46:46" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/23/test1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="John Doe">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Hexo">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/23/test1/" class="post-title-link" itemprop="url">test</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2022-11-23 05:13:39 / Modified: 06:46:46" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 05:13:39 / Modified: 07:14:31" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
             </span>
 
           
@@ -451,7 +337,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">2</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
