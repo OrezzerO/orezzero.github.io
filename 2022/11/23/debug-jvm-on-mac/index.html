@@ -28,7 +28,7 @@
 <meta property="og:description" content="背景最近在看 JVM 源码,没有 debug 环境很不方便, 都不知道方法是怎么跳转的. 因此想要自己搭一个 debug 环境. 网上有很多相关的文章, 但毕竟不是一模一样环境, 一点小小的差异, 就可能让编译失败,浪费很多时间. 因此我选择通过 brew 的编译方式来, 稍微修改一下参数即可获得我们需要的 debug 版本 JVM. 环境 Mac Studio M1 Max macOS Mont">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-11-23T08:15:17.000Z">
-<meta property="article:modified_time" content="2022-11-23T09:19:47.921Z">
+<meta property="article:modified_time" content="2022-11-24T06:47:29.216Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -172,10 +172,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2022-11-23 08:15:17 / Modified: 09:19:47" itemprop="dateCreated datePublished" datetime="2022-11-23T08:15:17+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 08:15:17" itemprop="dateCreated datePublished" datetime="2022-11-23T08:15:17+00:00">2022-11-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-11-24 06:47:29" itemprop="dateModified" datetime="2022-11-24T06:47:29+00:00">2022-11-24</time>
+              </span>
 
           
 
@@ -254,6 +260,7 @@
 <p>参考:<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/cpp/config-clang-mac#_customize-debugging-with-launchjson">Customize debugging with launch.json</a></p>
 <p>配置完成之后, 就能开始 debug 了.</p>
 <h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://openjdk.org/groups/build/doc/building.html">Building the JDK</a></p>
+<h1 id="反馈渠道"><a href="#反馈渠道" class="headerlink" title="反馈渠道"></a>反馈渠道</h1><p>如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues">Issue</a> 列表是否有类似 issue, 如果没有的话欢迎 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues/new">提交 Issue</a> 共同讨论.</p>
 
     </div>
 
@@ -331,7 +338,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">编译过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%9D%E8%AF%95%E7%9B%B4%E6%8E%A5%E9%80%9A%E8%BF%87-brew-%E7%BC%96%E8%AF%91-JVM"><span class="nav-number">3.0.1.</span> <span class="nav-text">尝试直接通过 brew 编译 JVM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#brew-%E7%BC%96%E8%AF%91-JVM-%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-number">3.0.2.</span> <span class="nav-text">brew 编译 JVM 的过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E7%BC%96%E8%AF%91-JVM"><span class="nav-number">3.0.3.</span> <span class="nav-text">手动编译 JVM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E8%BF%87-Vscode-%E5%90%AF%E5%8A%A8-java-%E5%B9%B6-debug"><span class="nav-number">3.0.4.</span> <span class="nav-text">通过 Vscode 启动 java 并 debug</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">4.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">编译过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%9D%E8%AF%95%E7%9B%B4%E6%8E%A5%E9%80%9A%E8%BF%87-brew-%E7%BC%96%E8%AF%91-JVM"><span class="nav-number">3.0.1.</span> <span class="nav-text">尝试直接通过 brew 编译 JVM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#brew-%E7%BC%96%E8%AF%91-JVM-%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-number">3.0.2.</span> <span class="nav-text">brew 编译 JVM 的过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E7%BC%96%E8%AF%91-JVM"><span class="nav-number">3.0.3.</span> <span class="nav-text">手动编译 JVM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E8%BF%87-Vscode-%E5%90%AF%E5%8A%A8-java-%E5%B9%B6-debug"><span class="nav-number">3.0.4.</span> <span class="nav-text">通过 Vscode 启动 java 并 debug</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">4.</span> <span class="nav-text">参考文档</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%8D%E9%A6%88%E6%B8%A0%E9%81%93"><span class="nav-number">5.</span> <span class="nav-text">反馈渠道</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

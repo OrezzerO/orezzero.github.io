@@ -168,10 +168,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2022-11-23 08:15:17 / Modified: 09:19:47" itemprop="dateCreated datePublished" datetime="2022-11-23T08:15:17+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 08:15:17" itemprop="dateCreated datePublished" datetime="2022-11-23T08:15:17+00:00">2022-11-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-11-24 06:47:29" itemprop="dateModified" datetime="2022-11-24T06:47:29+00:00">2022-11-24</time>
+              </span>
 
           
 
@@ -250,6 +256,7 @@
 <p>参考:<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/cpp/config-clang-mac#_customize-debugging-with-launchjson">Customize debugging with launch.json</a></p>
 <p>配置完成之后, 就能开始 debug 了.</p>
 <h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://openjdk.org/groups/build/doc/building.html">Building the JDK</a></p>
+<h1 id="反馈渠道"><a href="#反馈渠道" class="headerlink" title="反馈渠道"></a>反馈渠道</h1><p>如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues">Issue</a> 列表是否有类似 issue, 如果没有的话欢迎 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues/new">提交 Issue</a> 共同讨论.</p>
 
       
     </div>
@@ -292,10 +299,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2022-11-23 06:55:58 / Modified: 09:19:47" itemprop="dateCreated datePublished" datetime="2022-11-23T06:55:58+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 06:55:58" itemprop="dateCreated datePublished" datetime="2022-11-23T06:55:58+00:00">2022-11-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-11-24 06:47:29" itemprop="dateModified" datetime="2022-11-24T06:47:29+00:00">2022-11-24</time>
+              </span>
 
           
 
@@ -315,14 +328,22 @@
 <li>文本内容上传 Github 之后<strong>自动部署</strong>.</li>
 <li>任何其他人能够方便复刻这一套方案.</li>
 </ol>
-<h1 id="快速复刻本项目"><a href="#快速复刻本项目" class="headerlink" title="快速复刻本项目"></a>快速复刻本项目</h1><h3 id="创建站点"><a href="#创建站点" class="headerlink" title="创建站点"></a>创建站点</h3><p>如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork 本项目,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.</p>
-<p>在你的仓库中进入 Settings &gt; Pages &gt; Source，并将 branch 改为 gh-pages。</p>
-<p>删除 <code>source/_posts</code> (这里面是我的文章).</p>
-<h3 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h3><p>在 <code>source/_posts</code> 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:</p>
+<h1 id="快速复刻本项目"><a href="#快速复刻本项目" class="headerlink" title="快速复刻本项目"></a>快速复刻本项目</h1><h2 id="创建站点"><a href="#创建站点" class="headerlink" title="创建站点"></a>创建站点</h2><p>如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork 本项目,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.<br>具体步骤为:</p>
+<ol>
+<li>Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.</li>
+<li>进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用</li>
+<li>删除 <code>source/_posts</code> (这里面是我的文章) 除了 template.md 的文件,然后提交代码</li>
+<li>等待 Action 完成 (第一次跑pages build and deployment会失败,别管他)</li>
+<li>在你的仓库中进入 Settings &gt; Pages &gt; Source，并将 branch 改为 gh-pages。(在第一次提交代码之前,这个配置无法修改)</li>
+<li>手动触发 Action 中的 Pages action 或者提交一个修改触发 Action,等待 Action 完成</li>
+<li>访问 username.github.io 就能看到你的站点了</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://easyit-blog.github.io/">https://easyit-blog.github.io/</a> 就是这么创建出来的.</p>
+<h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><p>在 <code>source/_posts</code> 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 创建一个自己的博客</span><br><span class="line">date: 2022-11-23 06:55:58</span><br><span class="line">tags:</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 
 <p>这个头部后面就可以书写正文了.</p>
-<h1 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h1><h3 id="如何从零开始搭建-Hexo"><a href="#如何从零开始搭建-Hexo" class="headerlink" title="如何从零开始搭建 Hexo"></a>如何从零开始搭建 Hexo</h3><p>我使用了 Docker 来初始化项目. 首先我通过 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/blob/main/Dockerfile">Dockerfile</a> 创建了一个 Hexo 镜像, 启动这个镜像就会构建 Hexo 的基本环境到 &#x2F;blog 目录下. 然后我将容器中的 &#x2F;blog 目录拷贝出来. 基本环境就搭建好了.</p>
+<h1 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h1><h2 id="如何从零开始搭建-Hexo"><a href="#如何从零开始搭建-Hexo" class="headerlink" title="如何从零开始搭建 Hexo"></a>如何从零开始搭建 Hexo</h2><p>我使用了 Docker 来初始化项目. 首先我通过 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/blob/main/Dockerfile">Dockerfile</a> 创建了一个 Hexo 镜像, 启动这个镜像就会构建 Hexo 的基本环境到 &#x2F;blog 目录下. 然后我将容器中的 &#x2F;blog 目录拷贝出来. 基本环境就搭建好了.</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">构建 docker 镜像</span></span><br><span class="line">docker build -t hexo .</span><br></pre></td></tr></table></figure>
 
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动 docker 容器</span></span><br><span class="line">docker run --name hexo -d  -P hexo</span><br></pre></td></tr></table></figure>
@@ -330,7 +351,7 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 拷贝</span></span></span><br><span class="line">docker cp hexo:/blog ./</span><br></pre></td></tr></table></figure>
 
 
-<h3 id="本地启动-Hexo-Server"><a href="#本地启动-Hexo-Server" class="headerlink" title="本地启动 Hexo Server"></a>本地启动 Hexo Server</h3><p>按上节构造好镜像之后, 使用 docker-compose 配置文件启动 docker-compose 即可.</p>
+<h2 id="本地启动-Hexo-Server"><a href="#本地启动-Hexo-Server" class="headerlink" title="本地启动 Hexo Server"></a>本地启动 Hexo Server</h2><p>按上节构造好镜像之后, 使用 docker-compose 配置文件启动 docker-compose 即可.</p>
 <blockquote>
 <p>需要将配置文件放在 hexo 目录, 并在这个目录执行 docker compose 命令.</p>
 </blockquote>
@@ -339,14 +360,15 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">关闭 docker compose</span></span><br><span class="line">docker-compose down</span><br></pre></td></tr></table></figure>
 
 
-<h3 id="自动部署"><a href="#自动部署" class="headerlink" title="自动部署"></a>自动部署</h3><p>自动部署完全照搬了官网的 <a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a> 十分简单.</p>
+<h2 id="自动部署"><a href="#自动部署" class="headerlink" title="自动部署"></a>自动部署</h2><p>自动部署完全照搬了官网的 <a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a> 十分简单.</p>
 <blockquote>
 <p>自动部署在网上有很多教程, 但是这些教程都没有官网的简单可靠.</p>
 </blockquote>
-<h3 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h3><ol>
+<h2 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h2><ol>
 <li>主题文件夹<code>themes/next</code>没能成功上传到 github 上,导致编译不出静态页面.</li>
 </ol>
 <h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/">Hexo 官网</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/setup">建站</a></p>
+<h1 id="反馈渠道"><a href="#反馈渠道" class="headerlink" title="反馈渠道"></a>反馈渠道</h1><p>如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues">Issue</a> 列表是否有类似问题, 如果没有的话欢迎 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues/new">提交 Issue</a> 共同讨论.</p>
 
       
     </div>
@@ -389,10 +411,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2022-11-23 05:13:39 / Modified: 09:19:47" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-23 05:13:39" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-11-24 06:47:29" itemprop="dateModified" datetime="2022-11-24T06:47:29+00:00">2022-11-24</time>
+              </span>
 
           
 
