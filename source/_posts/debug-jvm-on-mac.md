@@ -115,3 +115,7 @@ configure 命令的例子
 
 # 参考文档
 [Building the JDK](https://openjdk.org/groups/build/doc/building.html)
+
+
+# 反馈渠道
+如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 [Issue](https://github.com/OrezzerO/orezzero.github.io/issues) 列表是否有类似 issue, 如果没有的话欢迎 [提交 Issue](https://github.com/OrezzerO/orezzero.github.io/issues/new) 共同讨论.

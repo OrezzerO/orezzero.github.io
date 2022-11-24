@@ -15,15 +15,21 @@ tags:
 
 
 # 快速复刻本项目
-### 创建站点
+## 创建站点
 如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork 本项目,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
+具体步骤为:
+1. Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
+2. 进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用
+3. 删除 `source/_posts` (这里面是我的文章) 除了 template.md 的文件,然后提交代码
+4. 等待 Action 完成 (第一次跑pages build and deployment会失败,别管他)
+5. 在你的仓库中进入 Settings > Pages > Source，并将 branch 改为 gh-pages。(在第一次提交代码之前,这个配置无法修改)
+6. 手动触发 Action 中的 Pages action 或者提交一个修改触发 Action,等待 Action 完成
+7. 访问 username.github.io 就能看到你的站点了
 
-在你的仓库中进入 Settings > Pages > Source，并将 branch 改为 gh-pages。
-
-删除 `source/_posts` (这里面是我的文章).
+[https://easyit-blog.github.io/](https://easyit-blog.github.io/) 就是这么创建出来的.
 
 
-### 写作
+## 写作
 在 `source/_posts` 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:
 ```
 ---
@@ -38,7 +44,7 @@ tags:
 
 # 技术细节
 
-### 如何从零开始搭建 Hexo
+## 如何从零开始搭建 Hexo
 我使用了 Docker 来初始化项目. 首先我通过 [Dockerfile](https://github.com/OrezzerO/orezzero.github.io/blob/main/Dockerfile) 创建了一个 Hexo 镜像, 启动这个镜像就会构建 Hexo 的基本环境到 /blog 目录下. 然后我将容器中的 /blog 目录拷贝出来. 基本环境就搭建好了.
 ```shell
 # 构建 docker 镜像
@@ -56,7 +62,7 @@ docker cp hexo:/blog ./
 ```
 
 
-### 本地启动 Hexo Server
+## 本地启动 Hexo Server
 按上节构造好镜像之后, 使用 docker-compose 配置文件启动 docker-compose 即可.
 
 > 需要将配置文件放在 hexo 目录, 并在这个目录执行 docker compose 命令.
@@ -73,12 +79,12 @@ docker-compose down
 ```
 
 
-### 自动部署
+## 自动部署
 自动部署完全照搬了官网的 [在 GitHub Pages 上部署 Hexo](https://hexo.io/zh-cn/docs/github-pages) 十分简单.
 
 > 自动部署在网上有很多教程, 但是这些教程都没有官网的简单可靠.
 
-### 遇到的坑
+## 遇到的坑
 1. 主题文件夹`themes/next`没能成功上传到 github 上,导致编译不出静态页面.
 
 
@@ -86,3 +92,7 @@ docker-compose down
 [Hexo 官网](https://hexo.io/zh-cn/)
 [在 GitHub Pages 上部署 Hexo](https://hexo.io/zh-cn/docs/github-pages)
 [建站](https://hexo.io/zh-cn/docs/setup)
+
+
+# 反馈渠道
+如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 [Issue](https://github.com/OrezzerO/orezzero.github.io/issues) 列表是否有类似问题, 如果没有的话欢迎 [提交 Issue](https://github.com/OrezzerO/orezzero.github.io/issues/new) 共同讨论.
