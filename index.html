@@ -37,13 +37,13 @@
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
+    isHome : false,
     isPost : false,
     lang   : 'en'
   };
 </script>
 
-  <title>Orez 的博客</title>
+  <title>Archive | Orez 的博客</title>
   
 
 
@@ -127,7 +127,12 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-overview">
+
+    <a href="/overview" rel="section"><i class="fa fa-eye fa-fw"></i>overview</a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -158,355 +163,89 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content archive">
             
-      
+
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/debug-jvm-on-mac/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
-      <meta itemprop="name" content="Orez">
-      <meta itemprop="description" content="分享我的日常技术博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Orez 的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/23/debug-jvm-on-mac/" class="post-title-link" itemprop="url">在 MacOS 上调试 JVM</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2022-11-23 08:15:17" itemprop="dateCreated datePublished" datetime="2022-11-23T08:15:17+00:00">2022-11-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 08:41:40" itemprop="dateModified" datetime="2022-11-28T08:41:40+00:00">2022-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
+  
+  <div class="post-block">
+    <div class="posts-collapse">
+      <div class="collection-title">
+        <span class="collection-header">Um..! 3 posts in total. Keep on posting.</span>
+      </div>
 
       
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>最近在看 JVM 源码,没有 debug 环境很不方便, 都不知道方法是怎么跳转的. 因此想要自己搭一个 debug 环境. 网上有很多相关的文章, 但毕竟不是一模一样环境, 一点小小的差异, 就可能让编译失败,浪费很多时间.</p>
-<p>因此我选择通过 brew 的编译方式来, 稍微修改一下参数即可获得我们需要的 debug 版本 JVM.</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>Mac Studio M1 Max</li>
-<li>macOS Monterey 12.5.1</li>
-</ul>
-<h1 id="编译过程"><a href="#编译过程" class="headerlink" title="编译过程"></a>编译过程</h1><h3 id="尝试直接通过-brew-编译-JVM"><a href="#尝试直接通过-brew-编译-JVM" class="headerlink" title="尝试直接通过 brew 编译 JVM"></a>尝试直接通过 brew 编译 JVM</h3><p>执行命令</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install --build-from-source --verbose openjdk@11</span><br></pre></td></tr></table></figure>
-<p>直接安装 jdk 11, 这个命令会从源码安装 openjdk11. 可以看下能不能编译成功. 如果这个命令编译不成功,后面的步骤页没必要尝试了; 如果编译成功了, 那我们就会比较有信心了.</p>
-<p>这个命令会输出很多细节信息, 这很重要.</p>
-<p>上述命令实际上执行的是 <a target="_blank" rel="noopener" href="https://github.com/Homebrew/homebrew-core/blob/master/Formula/openjdk%4011.rb">openjdk@11.rb</a>, 通目录下还有 openjdk8,17,19 可供选择.</p>
-<h3 id="brew-编译-JVM-的过程"><a href="#brew-编译-JVM-的过程" class="headerlink" title="brew 编译 JVM 的过程"></a>brew 编译 JVM 的过程</h3><ol>
-<li>下载并解压源码到 <code>/private/tmp/openjdk11xxx</code>中</li>
-<li>下载并解压 boot-jvm 到 <code>/private/tmp/openjdk11-boot-jdkxxx</code> 中</li>
-<li>根据 <a target="_blank" rel="noopener" href="https://github.com/Homebrew/homebrew-core/blob/master/Formula/openjdk%4011.rb">openjdk@11.rb</a> 中的配置执行 configure 脚本</li>
-<li>执行 make 命令:<code>make images CONF=release</code></li>
-<li>删除所有临时文件</li>
-</ol>
-<p>为了能编译出可以 debug 的 JVM ,我们还需要做两件事情:</p>
-<ol>
-<li>在配置 configure 脚本时,添加 debug 参数</li>
-<li>brew 在安装完成后会将源码删除, 我们需要将源码保留</li>
-</ol>
-<h3 id="手动编译-JVM"><a href="#手动编译-JVM" class="headerlink" title="手动编译 JVM"></a>手动编译 JVM</h3><p>接下俩我们仿照brew 的编译方式手动编译 JVM:</p>
-<ol>
-<li>解压源码<br>brew 安装完成后会删除源码,但是不会删除下载下来的源码压缩包,我们可以手动解压这个压缩包,然后将源码放到我们自己的目录中.</li>
-</ol>
-<p>相关的命令在 brew 编译 JVM 的输出中有,可以直接参考.</p>
-<blockquote>
-<p>注意: 解压目标文件夹需要已经存在.</p>
-</blockquote>
-<ol start="2">
-<li><p>解压 boot jdk<br>同上, 我们需要吧boot jdk 解压出来</p>
-</li>
-<li><p>修改 configure 参数执行 configure 脚本<br>执行 configure 脚本的参数在brew 输出中也有,可以抄下来.我们需要对其中几个参数进行修改:</p>
-</li>
-</ol>
-<ul>
-<li><code>--with-boot-jdk</code> 如果修改了 boot-jdk 的位置,需要将这个参数指向真确的位置</li>
-<li><code>--with-debug-level</code> 修改为fastdebug</li>
-<li><code>--with-native-debug-symbols</code> 的值修改为 internal, 表示会把符号表嵌入到二进制中,这是 debug 的关键</li>
-</ul>
-<p>configure 命令的例子</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --disable-hotspot-gtest --disable-warnings-as-errors --with-boot-jdk-jvmargs=-Duser.home=/Users/zhangchengxi/Library/Caches/Homebrew/java_cache --with-boot-jdk=/private/tmp/openjdkA11-20221122-35955-58bnn5/jdk11u-jdk-11.0.16.1-ga/boot-jdk --with-debug-level=fastdebug --with-conf-name=release --with-jvm-variants=server --with-jvm-features=shenandoahgc --with-native-debug-symbols=none --with-vendor-bug-url=https://github.com/Homebrew/homebrew-core/issues --with-vendor-name=Homebrew --with-vendor-url=https://github.com/Homebrew/homebrew-core/issues --with-vendor-version-string=Homebrew --with-vendor-vm-bug-url=https://github.com/Homebrew/homebrew-core/issues --without-version-opt --without-version-pre --enable-dtrace --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX12.sdk --with-extra-ldflags=-Wl,-rpath,@loader_path/server -headerpad_max_install_names</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>这里有个问题, brew 执行这个命令是可以成功的,但是我执行的时候, 必须把最后一个参数 headerpad_max_install_names 去掉才能成功.</p>
-</blockquote>
-<ol start="4">
-<li>执行 make 命令: <code>make images CONF=release</code><br>这个命令会在 <code>release/images/jdk/</code>  下创建 JVM 的二进制</li>
-</ol>
-<p>上述步骤完成之后, 我们就有了可以用于 debug 的 JVM 了.</p>
-<h3 id="通过-Vscode-启动-java-并-debug"><a href="#通过-Vscode-启动-java-并-debug" class="headerlink" title="通过 Vscode 启动 java 并 debug"></a>通过 Vscode 启动 java 并 debug</h3><p>我们通过 vscode 打开 jvm 源码之后, 可以在左边打开一个 debug 界面.在这个界面中有一个<br><code>create a launch.json file</code> 的按钮, 我们点击它,就能创建一个 <code>.vscode/launch.json</code> 的文件.<br>最终这个文件会长这个样子:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;0.2.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;configurations&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;(lldb) 启动&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;cppdbg&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;request&quot;</span><span class="punctuation">:</span> <span class="string">&quot;launch&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;program&quot;</span><span class="punctuation">:</span> <span class="string">&quot;/your/path/to/jdk/source/build/release/images/jdk/bin/java&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;-Dfile.encoding=UTF-8&quot;</span><span class="punctuation">,</span><span class="string">&quot;-Djava.compiler=NONE&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;-classpath&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;/dir/demo/target/classes&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;org.example.Main&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;stopAtEntry&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;cwd&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$&#123;workspaceFolder&#125;&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;environment&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;externalConsole&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;MIMode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;lldb&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;targetArchitecture&quot;</span><span class="punctuation">:</span> <span class="string">&quot;arm64&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-
-<p> 这里面有两个参数需要修改:</p>
-<ul>
-<li>“program”: 代表你编译生成的 java 命令的路径</li>
-<li>“args”: 代表 java 命令的参数</li>
-</ul>
-<blockquote>
-<p>小tips : args 参数可以在 JAVA IDE 的输出中找到, 但需要删除其中有关 IDE 的 aggent 参数.</p>
-</blockquote>
-<p>参考:<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/cpp/config-clang-mac#_customize-debugging-with-launchjson">Customize debugging with launch.json</a></p>
-<p>配置完成之后, 就能开始 debug 了.</p>
-<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://openjdk.org/groups/build/doc/building.html">Building the JDK</a></p>
-
-      
+    <div class="collection-year">
+      <span class="collection-header">2022</span>
     </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
+  <article itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <div class="post-meta">
+        <time itemprop="dateCreated"
+              datetime="2022-11-23T08:15:17+00:00"
+              content="2022-11-23">
+          11-23
+        </time>
+      </div>
+
+      <div class="post-title">
+          <a class="post-title-link" href="/2022/11/23/debug-jvm-on-mac/" itemprop="url">
+            <span itemprop="name">在 MacOS 上调试 JVM</span>
+          </a>
+      </div>
+
+    </header>
   </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/Create-a-blog/">
+  <article itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
-      <meta itemprop="name" content="Orez">
-      <meta itemprop="description" content="分享我的日常技术博客">
-    </span>
+      <div class="post-meta">
+        <time itemprop="dateCreated"
+              datetime="2022-11-23T06:55:58+00:00"
+              content="2022-11-23">
+          11-23
+        </time>
+      </div>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Orez 的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/23/Create-a-blog/" class="post-title-link" itemprop="url">创建一个自己的博客</a>
-        </h2>
+      <div class="post-title">
+          <a class="post-title-link" href="/2022/11/23/Create-a-blog/" itemprop="url">
+            <span itemprop="name">创建一个自己的博客</span>
+          </a>
+      </div>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+    </header>
+  </article>
 
-              <time title="Created: 2022-11-23 06:55:58" itemprop="dateCreated datePublished" datetime="2022-11-23T06:55:58+00:00">2022-11-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 16:37:53" itemprop="dateModified" datetime="2022-11-28T16:37:53+00:00">2022-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Blog/" itemprop="url" rel="index"><span itemprop="name">Blog</span></a>
-                </span>
-            </span>
+  <article itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
 
-          
+      <div class="post-meta">
+        <time itemprop="dateCreated"
+              datetime="2022-11-23T05:13:39+00:00"
+              content="2022-11-23">
+          11-23
+        </time>
+      </div>
 
-        </div>
-      </header>
+      <div class="post-title">
+          <a class="post-title-link" href="/2022/11/23/template/" itemprop="url">
+            <span itemprop="name">template</span>
+          </a>
+      </div>
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>几年前就搭建了自己的 Github Page, 但当时搭建的时候, 博客文章没有上传到 Github, 只上传了生成的静态文件,而且没有自动部署的能力.准备重新提笔写博客,就重新搭一套.</p>
-<h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><p>这次搭博客有如下技术目标:</p>
-<ol>
-<li>搭建完成之后,只依赖 <strong>文本编辑</strong>+<strong>git</strong> 就能完成写作, 不需要其他依赖(尤其是node依赖)</li>
-<li>文本内容上传 Github 之后<strong>自动部署</strong>.</li>
-<li>任何其他人能够方便复刻这一套方案.</li>
-</ol>
-<h1 id="快速复刻本项目"><a href="#快速复刻本项目" class="headerlink" title="快速复刻本项目"></a>快速复刻本项目</h1><h2 id="创建站点"><a href="#创建站点" class="headerlink" title="创建站点"></a>创建站点</h2><p>如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork <a target="_blank" rel="noopener" href="https://github.com/orezzero/orezzero.github.io">本项目</a>,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.<br>具体步骤为:</p>
-<ol>
-<li>Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.</li>
-<li>进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用</li>
-<li>删除 <code>source/_posts</code> (这里面是我的文章) 除了 template.md 的文件,删除 <code>sources/images/</code>中的图片, 修改 <code>source/about/index.md</code> 然后提交代码</li>
-<li>等待 Action 完成 (第一次跑pages build and deployment会失败,别管他)</li>
-<li>在你的仓库中进入 Settings &gt; Pages &gt; Source，并将 branch 改为 gh-pages。(在第一次提交代码之前,这个配置无法修改)</li>
-<li>手动触发 Action 中的 Pages action 或者提交一个修改触发 Action,等待 Action 完成</li>
-<li>访问 username.github.io 就能看到你的站点了</li>
-</ol>
-<p><a target="_blank" rel="noopener" href="https://easyit-blog.github.io/">https://easyit-blog.github.io/</a> 就是这么创建出来的.</p>
-<blockquote>
-<p>本项目有一些区别于原生 Next 主题的定制化配置, 可以参考 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/pull/1">PR Modify theme settings #1</a> 来自定义你的主题.</p>
-</blockquote>
-<h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><p>在 <code>source/_posts</code> 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 创建一个自己的博客</span><br><span class="line">date: 2022-11-23 06:55:58</span><br><span class="line">tags:</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-
-<p>这个头部后面就可以书写正文了.</p>
-<h1 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h1><h2 id="如何从零开始搭建-Hexo"><a href="#如何从零开始搭建-Hexo" class="headerlink" title="如何从零开始搭建 Hexo"></a>如何从零开始搭建 Hexo</h2><p>我使用了 Docker 来初始化项目. 首先我通过 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/blob/main/Dockerfile">Dockerfile</a> 创建了一个 Hexo 镜像, 启动这个镜像就会构建 Hexo 的基本环境到 &#x2F;blog 目录下. 然后我将容器中的 &#x2F;blog 目录拷贝出来. 基本环境就搭建好了.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">构建 docker 镜像</span></span><br><span class="line">docker build -t hexo .</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动 docker 容器</span></span><br><span class="line">docker run --name hexo -d  -P hexo</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 拷贝</span></span></span><br><span class="line">docker cp hexo:/blog ./</span><br></pre></td></tr></table></figure>
+    </header>
+  </article>
 
 
-<h2 id="本地启动-Hexo-Server"><a href="#本地启动-Hexo-Server" class="headerlink" title="本地启动 Hexo Server"></a>本地启动 Hexo Server</h2><p>按上节构造好镜像之后, 使用 docker-compose 配置文件启动 docker-compose 即可.</p>
-<blockquote>
-<p>需要将配置文件放在 hexo 目录, 并在这个目录执行 docker compose 命令.</p>
-</blockquote>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动 docker compose</span></span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">关闭 docker compose</span></span><br><span class="line">docker-compose down</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="自动部署"><a href="#自动部署" class="headerlink" title="自动部署"></a>自动部署</h2><p>自动部署完全照搬了官网的 <a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a> 十分简单.</p>
-<blockquote>
-<p>自动部署在网上有很多教程, 但是这些教程都没有官网的简单可靠.</p>
-</blockquote>
-<h2 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h2><ol>
-<li>主题文件夹<code>themes/next</code>没能成功上传到 github 上,导致编译不出静态页面.</li>
-</ol>
-<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://theme-next.js.org/docs/getting-started/">Next 主题文档站</a>: 这个网站比较重要,很多配置可以参考这里的文档.<br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/">Hexo 官网</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/setup">建站</a></p>
-
-      
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
+  </div>
   
   
   
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/template/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
-      <meta itemprop="name" content="Orez">
-      <meta itemprop="description" content="分享我的日常技术博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Orez 的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/23/template/" class="post-title-link" itemprop="url">template</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2022-11-23 05:13:39" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 08:41:40" itemprop="dateModified" datetime="2022-11-28T08:41:40+00:00">2022-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Blog/" itemprop="url" rel="index"><span itemprop="name">Blog</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
 
