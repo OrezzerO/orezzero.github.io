@@ -195,8 +195,21 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 08:30:19" itemprop="dateModified" datetime="2022-11-28T08:30:19+00:00">2022-11-28</time>
+                <time title="Modified: 2022-11-28 08:41:40" itemprop="dateModified" datetime="2022-11-28T08:41:40+00:00">2022-11-28</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+            </span>
 
           
 
@@ -325,8 +338,21 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 08:30:19" itemprop="dateModified" datetime="2022-11-28T08:30:19+00:00">2022-11-28</time>
+                <time title="Modified: 2022-11-28 16:37:53" itemprop="dateModified" datetime="2022-11-28T16:37:53+00:00">2022-11-28</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Blog/" itemprop="url" rel="index"><span itemprop="name">Blog</span></a>
+                </span>
+            </span>
 
           
 
@@ -350,13 +376,16 @@
 <ol>
 <li>Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.</li>
 <li>进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用</li>
-<li>删除 <code>source/_posts</code> (这里面是我的文章) 除了 template.md 的文件,然后提交代码</li>
+<li>删除 <code>source/_posts</code> (这里面是我的文章) 除了 template.md 的文件,删除 <code>sources/images/</code>中的图片, 修改 <code>source/about/index.md</code> 然后提交代码</li>
 <li>等待 Action 完成 (第一次跑pages build and deployment会失败,别管他)</li>
 <li>在你的仓库中进入 Settings &gt; Pages &gt; Source，并将 branch 改为 gh-pages。(在第一次提交代码之前,这个配置无法修改)</li>
 <li>手动触发 Action 中的 Pages action 或者提交一个修改触发 Action,等待 Action 完成</li>
 <li>访问 username.github.io 就能看到你的站点了</li>
 </ol>
 <p><a target="_blank" rel="noopener" href="https://easyit-blog.github.io/">https://easyit-blog.github.io/</a> 就是这么创建出来的.</p>
+<blockquote>
+<p>本项目有一些区别于原生 Next 主题的定制化配置, 可以参考 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/pull/1">PR Modify theme settings #1</a> 来自定义你的主题.</p>
+</blockquote>
 <h2 id="写作"><a href="#写作" class="headerlink" title="写作"></a>写作</h2><p>在 <code>source/_posts</code> 文件夹中创建 markdown 文件. Hexo 对于 md 的格式有一定要求,需要用这种格式开头:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 创建一个自己的博客</span><br><span class="line">date: 2022-11-23 06:55:58</span><br><span class="line">tags:</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 
@@ -385,7 +414,7 @@
 <h2 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h2><ol>
 <li>主题文件夹<code>themes/next</code>没能成功上传到 github 上,导致编译不出静态页面.</li>
 </ol>
-<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/">Hexo 官网</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/setup">建站</a></p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://theme-next.js.org/docs/getting-started/">Next 主题文档站</a>: 这个网站比较重要,很多配置可以参考这里的文档.<br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/">Hexo 官网</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/github-pages">在 GitHub Pages 上部署 Hexo</a><br><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/setup">建站</a></p>
 
       
     </div>
@@ -436,7 +465,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-28 08:30:19" itemprop="dateModified" datetime="2022-11-28T08:30:19+00:00">2022-11-28</time>
+                <time title="Modified: 2022-11-28 08:41:40" itemprop="dateModified" datetime="2022-11-28T08:41:40+00:00">2022-11-28</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -546,13 +575,13 @@
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
