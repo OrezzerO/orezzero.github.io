@@ -1,7 +1,12 @@
 ---
 title: 在 MacOS 上调试 JVM
 date: 2022-11-23 08:15:17
+categories:
+- CS
+- Java
 tags:
+- jvm
+- java
 ---
 
 # 背景

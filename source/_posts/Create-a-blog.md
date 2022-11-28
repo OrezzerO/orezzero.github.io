@@ -1,7 +1,13 @@
 ---
 title: 创建一个自己的博客
 date: 2022-11-23 06:55:58
+updated: 2022-11-28 16:37:53
+categories:
+- CS
+- Blog
 tags:
+- hexo
+- NexT
 ---
 
 # 背景
@@ -20,13 +26,15 @@ tags:
 具体步骤为:
 1. Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
 2. 进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用
-3. 删除 `source/_posts` (这里面是我的文章) 除了 template.md 的文件,然后提交代码
+3. 删除 `source/_posts` (这里面是我的文章) 除了 template.md 的文件,删除 `sources/images/`中的图片, 修改 `source/about/index.md` 然后提交代码
 4. 等待 Action 完成 (第一次跑pages build and deployment会失败,别管他)
 5. 在你的仓库中进入 Settings > Pages > Source，并将 branch 改为 gh-pages。(在第一次提交代码之前,这个配置无法修改)
 6. 手动触发 Action 中的 Pages action 或者提交一个修改触发 Action,等待 Action 完成
 7. 访问 username.github.io 就能看到你的站点了
 
 [https://easyit-blog.github.io/](https://easyit-blog.github.io/) 就是这么创建出来的.
+
+> 本项目有一些区别于原生 Next 主题的定制化配置, 可以参考 [PR Modify theme settings #1](https://github.com/OrezzerO/orezzero.github.io/pull/1) 来自定义你的主题.
 
 
 ## 写作
@@ -89,6 +97,7 @@ docker-compose down
 
 
 # 参考文档
+[Next 主题文档站](https://theme-next.js.org/docs/getting-started/): 这个网站比较重要,很多配置可以参考这里的文档.
 [Hexo 官网](https://hexo.io/zh-cn/)
 [在 GitHub Pages 上部署 Hexo](https://hexo.io/zh-cn/docs/github-pages)
 [建站](https://hexo.io/zh-cn/docs/setup)
