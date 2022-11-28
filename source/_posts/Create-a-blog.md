@@ -16,7 +16,7 @@ tags:
 
 # 快速复刻本项目
 ## 创建站点
-如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork 本项目,然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
+如果你也想搭建一套博客,而不想折腾环境,可以直接 Fork [本项目](https://github.com/orezzero/orezzero.github.io),然后改名为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
 具体步骤为:
 1. Fork 本项目,fork 时可以将 orezzero.github.io 改为 username.github.io  ，username 是你在 GitHub 上的使用者名称.
 2. 进入你的仓库, 进入 Action 页面, 确认 Action 功能已经被启用
@@ -92,7 +92,3 @@ docker-compose down
 [Hexo 官网](https://hexo.io/zh-cn/)
 [在 GitHub Pages 上部署 Hexo](https://hexo.io/zh-cn/docs/github-pages)
 [建站](https://hexo.io/zh-cn/docs/setup)
-
-
-# 反馈渠道
-如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 [Issue](https://github.com/OrezzerO/orezzero.github.io/issues) 列表是否有类似问题, 如果没有的话欢迎 [提交 Issue](https://github.com/OrezzerO/orezzero.github.io/issues/new) 共同讨论.
