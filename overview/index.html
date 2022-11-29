@@ -169,6 +169,109 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/28/remote-login-use-ssh/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/11/28/remote-login-use-ssh/" class="post-title-link" itemprop="url">使用 SSH 实现远程登录内网机器 (MacOS)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-11-28 17:12:32" itemprop="dateCreated datePublished" datetime="2022-11-28T17:12:32+00:00">2022-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-11-29 07:47:28" itemprop="dateModified" datetime="2022-11-29T07:47:28+00:00">2022-11-29</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>现在我的主力开发机器是台台式机, 有时候出门在外, 就没办法操控这台机器了. 我解决这个问题的<strong>基本思路</strong>是: 租用一台云上带公网域名的机器,然后将本地 22 端口映射到云服务器上. 这样就可以将云服务器作为一台跳板机,登录我本地的机器了.</p>
+<h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
+<li>将本地 22 端口映射到云上机器</li>
+<li>让本地机器开机运行脚本,自动完成上述工作</li>
+</ul>
+<h1 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h1><h2 id="准备工作-购买一台云服务器"><a href="#准备工作-购买一台云服务器" class="headerlink" title="准备工作:购买一台云服务器"></a>准备工作:购买一台云服务器</h2><p>我买的的是一台2C4G,腾讯云服务器.趁双11+新人优惠,只要100元&#x2F;年.需要获取这台机器的IP,设置 ssh 公钥,让本地机器可以通过shell<strong>免密</strong>登录云服务器.</p>
+<h2 id="本地机器配置"><a href="#本地机器配置" class="headerlink" title="本地机器配置"></a>本地机器配置</h2><p>构造以下两个文件:<br>remote_ssh.sh:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">PORT=&#x27;8888&#x27;</span><br><span class="line">n=1</span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">  echo &quot;try $n&quot;</span><br><span class="line">  ssh -o ExitOnForwardFailure=yes -R 8888:localhost:22 -N root@cloud_ip</span><br><span class="line">  n=$((n+1))</span><br><span class="line">  echo &quot;fail $n&quot;</span><br><span class="line">  sleep 15</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+<p>这个脚本会将云服务器上的 8888 收到的请求转发给本地22端口, 也就是本地 sshd 监听的端口. 同时如果操作失败,就会15s后重试.<br>变量说明:</p>
+<ul>
+<li><strong>root</strong>: 登录云服务器的用户名,根据你的需要修改</li>
+<li><strong>cloud_ip</strong>: 云服务器的公网ip</li>
+<li><strong>-o ExitOnForwardFailure&#x3D;yes</strong>: 设置如果端口转发开启失败就退出的选项</li>
+</ul>
+<p>startup.sh:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">curday=`date +%Y-%m-%d`</span><br><span class="line"></span><br><span class="line">nohup bash ~/git/shell/remote_ssh.sh 2&gt;&amp;1 &gt;~/git/shell/logs/remote_ssh$curday.log &amp;</span><br></pre></td></tr></table></figure>
+<p>这个脚本会执行 <code>remote_ssh.sh</code> 这个脚本,并将日志输出到<code>~/git/shell/logs/</code>文件夹中.</p>
+<p>将<code>startup.sh</code>的默认打开方式修改为 Term 或者 iTerm.</p>
+<p>在系统设置-&gt;用户与群组将 startup.sh 添加到登录项.</p>
+<h2 id="云上机器配置"><a href="#云上机器配置" class="headerlink" title="云上机器配置"></a>云上机器配置</h2><p>修改 <code>/etc/ssh/sshd_config</code> 文件, 添加如下配置:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ClientAliveInterval 10</span><br><span class="line">ClientAliveCountMax 1</span><br></pre></td></tr></table></figure>
+
+<p>这两个配置会开启服务端 shhd 对于客户端的探活,如果客户端连接断开了, 服务端也会关闭连接.</p>
+<h1 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h1><h2 id="端口转发失败之后-ssh-不退出"><a href="#端口转发失败之后-ssh-不退出" class="headerlink" title="端口转发失败之后, ssh 不退出"></a>端口转发失败之后, ssh 不退出</h2><p>端口转发失败之后, ssh 不退出,就没办法做重试. 在添加 <code>-o ExitOnForwardFailure=yes</code> 选项之后,修复了这问题.</p>
+<h2 id="ssh-断开之后-sshd-依然监听端口"><a href="#ssh-断开之后-sshd-依然监听端口" class="headerlink" title="ssh 断开之后, sshd 依然监听端口"></a>ssh 断开之后, sshd 依然监听端口</h2><p>ssh 断开之后, sshd 依然监听端口. 当 ssh 继续重试建立端口转发,因为服务端 sshd 依然占用之前那个端口,导致重试始终无法成功.<br>解决方案是给 sshd 开启探活,添加 ClientAliveInterval 和 ClientAliveCountMax 配置.</p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档:"></a>参考文档:</h1><p><a target="_blank" rel="noopener" href="https://wangdoc.com/ssh/port-forwarding">SSH教程</a>: 阮一峰的SSH教程, 看完不需要多长时间,能对 SSH 有初步了解<br><a target="_blank" rel="noopener" href="https://superuser.com/questions/1563605/how-can-a-remote-ssh-tunnel-port-be-closed-on-the-ssh-server-when-the-ssh-comman">how-can-a-remote-ssh-tunnel-port-be-closed-on-the-ssh-server-when-the-ssh-comman</a><br><a target="_blank" rel="noopener" href="https://man.openbsd.org/sshd_config">man:sshd_config</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/debug-jvm-on-mac/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -200,7 +303,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-29 07:43:56" itemprop="dateModified" datetime="2022-11-29T07:43:56+00:00">2022-11-29</time>
+                <time title="Modified: 2022-11-29 07:47:28" itemprop="dateModified" datetime="2022-11-29T07:47:28+00:00">2022-11-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -470,7 +573,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-11-29 07:43:56" itemprop="dateModified" datetime="2022-11-29T07:43:56+00:00">2022-11-29</time>
+                <time title="Modified: 2022-11-29 07:47:28" itemprop="dateModified" datetime="2022-11-29T07:47:28+00:00">2022-11-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -580,13 +683,13 @@
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

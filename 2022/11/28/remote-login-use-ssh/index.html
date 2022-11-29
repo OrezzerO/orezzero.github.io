@@ -20,21 +20,22 @@
     var CONFIG = {"hostname":"orezzero.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="分享我的日常技术博客">
+  <meta name="description" content="背景现在我的主力开发机器是台台式机, 有时候出门在外, 就没办法操控这台机器了. 我解决这个问题的基本思路是: 租用一台云上带公网域名的机器,然后将本地 22 端口映射到云服务器上. 这样就可以将云服务器作为一台跳板机,登录我本地的机器了. 目标 将本地 22 端口映射到云上机器 让本地机器开机运行脚本,自动完成上述工作  实现步骤准备工作:购买一台云服务器我买的的是一台2C4G,腾讯云服务器.趁">
 <meta property="og:type" content="article">
-<meta property="og:title" content="template">
-<meta property="og:url" content="http://orezzero.github.io/2022/11/23/template/index.html">
+<meta property="og:title" content="使用 SSH 实现远程登录内网机器 (MacOS)">
+<meta property="og:url" content="http://orezzero.github.io/2022/11/28/remote-login-use-ssh/index.html">
 <meta property="og:site_name" content="Orez 的博客">
-<meta property="og:description" content="分享我的日常技术博客">
+<meta property="og:description" content="背景现在我的主力开发机器是台台式机, 有时候出门在外, 就没办法操控这台机器了. 我解决这个问题的基本思路是: 租用一台云上带公网域名的机器,然后将本地 22 端口映射到云服务器上. 这样就可以将云服务器作为一台跳板机,登录我本地的机器了. 目标 将本地 22 端口映射到云上机器 让本地机器开机运行脚本,自动完成上述工作  实现步骤准备工作:购买一台云服务器我买的的是一台2C4G,腾讯云服务器.趁">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2022-11-23T05:13:39.000Z">
+<meta property="article:published_time" content="2022-11-28T17:12:32.000Z">
 <meta property="article:modified_time" content="2022-11-29T07:47:28.278Z">
 <meta property="article:author" content="Orez">
-<meta property="article:tag" content="hexo">
-<meta property="article:tag" content="NexT">
+<meta property="article:tag" content="ssh">
+<meta property="article:tag" content="network">
+<meta property="article:tag" content="todo">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://orezzero.github.io/2022/11/23/template/">
+<link rel="canonical" href="http://orezzero.github.io/2022/11/28/remote-login-use-ssh/">
 
 
 <script id="page-configurations">
@@ -47,7 +48,7 @@
   };
 </script>
 
-  <title>template | Orez 的博客</title>
+  <title>使用 SSH 实现远程登录内网机器 (MacOS) | Orez 的博客</title>
   
 
 
@@ -174,7 +175,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/template/">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/28/remote-login-use-ssh/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
@@ -187,7 +188,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          template
+          使用 SSH 实现远程登录内网机器 (MacOS)
         </h1>
 
         <div class="post-meta">
@@ -197,7 +198,7 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2022-11-23 05:13:39" itemprop="dateCreated datePublished" datetime="2022-11-23T05:13:39+00:00">2022-11-23</time>
+              <time title="Created: 2022-11-28 17:12:32" itemprop="dateCreated datePublished" datetime="2022-11-28T17:12:32+00:00">2022-11-28</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
@@ -216,7 +217,7 @@
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Blog/" itemprop="url" rel="index"><span itemprop="name">Blog</span></a>
+                  <a href="/categories/CS/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
                 </span>
             </span>
 
@@ -231,7 +232,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>现在我的主力开发机器是台台式机, 有时候出门在外, 就没办法操控这台机器了. 我解决这个问题的<strong>基本思路</strong>是: 租用一台云上带公网域名的机器,然后将本地 22 端口映射到云服务器上. 这样就可以将云服务器作为一台跳板机,登录我本地的机器了.</p>
+<h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
+<li>将本地 22 端口映射到云上机器</li>
+<li>让本地机器开机运行脚本,自动完成上述工作</li>
+</ul>
+<h1 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h1><h2 id="准备工作-购买一台云服务器"><a href="#准备工作-购买一台云服务器" class="headerlink" title="准备工作:购买一台云服务器"></a>准备工作:购买一台云服务器</h2><p>我买的的是一台2C4G,腾讯云服务器.趁双11+新人优惠,只要100元&#x2F;年.需要获取这台机器的IP,设置 ssh 公钥,让本地机器可以通过shell<strong>免密</strong>登录云服务器.</p>
+<h2 id="本地机器配置"><a href="#本地机器配置" class="headerlink" title="本地机器配置"></a>本地机器配置</h2><p>构造以下两个文件:<br>remote_ssh.sh:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">PORT=&#x27;8888&#x27;</span><br><span class="line">n=1</span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">  echo &quot;try $n&quot;</span><br><span class="line">  ssh -o ExitOnForwardFailure=yes -R 8888:localhost:22 -N root@cloud_ip</span><br><span class="line">  n=$((n+1))</span><br><span class="line">  echo &quot;fail $n&quot;</span><br><span class="line">  sleep 15</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+<p>这个脚本会将云服务器上的 8888 收到的请求转发给本地22端口, 也就是本地 sshd 监听的端口. 同时如果操作失败,就会15s后重试.<br>变量说明:</p>
+<ul>
+<li><strong>root</strong>: 登录云服务器的用户名,根据你的需要修改</li>
+<li><strong>cloud_ip</strong>: 云服务器的公网ip</li>
+<li><strong>-o ExitOnForwardFailure&#x3D;yes</strong>: 设置如果端口转发开启失败就退出的选项</li>
+</ul>
+<p>startup.sh:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">curday=`date +%Y-%m-%d`</span><br><span class="line"></span><br><span class="line">nohup bash ~/git/shell/remote_ssh.sh 2&gt;&amp;1 &gt;~/git/shell/logs/remote_ssh$curday.log &amp;</span><br></pre></td></tr></table></figure>
+<p>这个脚本会执行 <code>remote_ssh.sh</code> 这个脚本,并将日志输出到<code>~/git/shell/logs/</code>文件夹中.</p>
+<p>将<code>startup.sh</code>的默认打开方式修改为 Term 或者 iTerm.</p>
+<p>在系统设置-&gt;用户与群组将 startup.sh 添加到登录项.</p>
+<h2 id="云上机器配置"><a href="#云上机器配置" class="headerlink" title="云上机器配置"></a>云上机器配置</h2><p>修改 <code>/etc/ssh/sshd_config</code> 文件, 添加如下配置:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ClientAliveInterval 10</span><br><span class="line">ClientAliveCountMax 1</span><br></pre></td></tr></table></figure>
+
+<p>这两个配置会开启服务端 shhd 对于客户端的探活,如果客户端连接断开了, 服务端也会关闭连接.</p>
+<h1 id="遇到的坑"><a href="#遇到的坑" class="headerlink" title="遇到的坑"></a>遇到的坑</h1><h2 id="端口转发失败之后-ssh-不退出"><a href="#端口转发失败之后-ssh-不退出" class="headerlink" title="端口转发失败之后, ssh 不退出"></a>端口转发失败之后, ssh 不退出</h2><p>端口转发失败之后, ssh 不退出,就没办法做重试. 在添加 <code>-o ExitOnForwardFailure=yes</code> 选项之后,修复了这问题.</p>
+<h2 id="ssh-断开之后-sshd-依然监听端口"><a href="#ssh-断开之后-sshd-依然监听端口" class="headerlink" title="ssh 断开之后, sshd 依然监听端口"></a>ssh 断开之后, sshd 依然监听端口</h2><p>ssh 断开之后, sshd 依然监听端口. 当 ssh 继续重试建立端口转发,因为服务端 sshd 依然占用之前那个端口,导致重试始终无法成功.<br>解决方案是给 sshd 开启探活,添加 ClientAliveInterval 和 ClientAliveCountMax 配置.</p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档:"></a>参考文档:</h1><p><a target="_blank" rel="noopener" href="https://wangdoc.com/ssh/port-forwarding">SSH教程</a>: 阮一峰的SSH教程, 看完不需要多长时间,能对 SSH 有初步了解<br><a target="_blank" rel="noopener" href="https://superuser.com/questions/1563605/how-can-a-remote-ssh-tunnel-port-be-closed-on-the-ssh-server-when-the-ssh-comman">how-can-a-remote-ssh-tunnel-port-be-closed-on-the-ssh-server-when-the-ssh-comman</a><br><a target="_blank" rel="noopener" href="https://man.openbsd.org/sshd_config">man:sshd_config</a></p>
+
     </div>
 
     
@@ -263,8 +290,9 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/hexo/" rel="tag"># hexo</a>
-              <a href="/tags/NexT/" rel="tag"># NexT</a>
+              <a href="/tags/ssh/" rel="tag"># ssh</a>
+              <a href="/tags/network/" rel="tag"># network</a>
+              <a href="/tags/todo/" rel="tag"># todo</a>
           </div>
 
         
@@ -272,11 +300,11 @@
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2022/11/23/Create-a-blog/" rel="next" title="创建一个自己的博客">
-      创建一个自己的博客 <i class="fa fa-chevron-right"></i>
+    <a href="/2022/11/23/debug-jvm-on-mac/" rel="prev" title="在 MacOS 上调试 JVM">
+      <i class="fa fa-chevron-left"></i> 在 MacOS 上调试 JVM
     </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -335,6 +363,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87"><span class="nav-number">2.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.</span> <span class="nav-text">实现步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C-%E8%B4%AD%E4%B9%B0%E4%B8%80%E5%8F%B0%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">3.1.</span> <span class="nav-text">准备工作:购买一台云服务器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%9C%BA%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">本地机器配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%91%E4%B8%8A%E6%9C%BA%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">云上机器配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91"><span class="nav-number">4.</span> <span class="nav-text">遇到的坑</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91%E5%A4%B1%E8%B4%A5%E4%B9%8B%E5%90%8E-ssh-%E4%B8%8D%E9%80%80%E5%87%BA"><span class="nav-number">4.1.</span> <span class="nav-text">端口转发失败之后, ssh 不退出</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ssh-%E6%96%AD%E5%BC%80%E4%B9%8B%E5%90%8E-sshd-%E4%BE%9D%E7%84%B6%E7%9B%91%E5%90%AC%E7%AB%AF%E5%8F%A3"><span class="nav-number">4.2.</span> <span class="nav-text">ssh 断开之后, sshd 依然监听端口</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">5.</span> <span class="nav-text">参考文档:</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
