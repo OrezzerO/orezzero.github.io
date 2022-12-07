@@ -169,6 +169,113 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/06/byte_buddy_simple_example_intro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/12/06/byte_buddy_simple_example_intro/" class="post-title-link" itemprop="url">一个简单的 Byte Buddy 例子及原理简述</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-12-06 17:08:06" itemprop="dateCreated datePublished" datetime="2022-12-06T17:08:06+00:00">2022-12-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h1><h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><p>我们有一个类 EchoA, 它有一个方法 <code>echo</code> 返回值是一个字符串 <code>&quot;A&quot;</code>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EchoA</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">echo</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;A&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们想要通过 ByteBuddy 来动态生成一个类, 它的 echo 方法返回字符串 <code>&quot;B&quot;</code>.</p>
+<h2 id="ByteBuddy-实现"><a href="#ByteBuddy-实现" class="headerlink" title="ByteBuddy 实现"></a>ByteBuddy 实现</h2><p>我们可以这么写:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="comment">// 使用 ByteBuddy 开始构造一个类</span></span><br><span class="line">    DynamicType.Unloaded&lt;EchoA&gt; newClass = <span class="keyword">new</span> <span class="title class_">ByteBuddy</span>()</span><br><span class="line">            .subclass(EchoA.class) <span class="comment">// 新的类继承于 EchoA</span></span><br><span class="line">            .method(ElementMatchers.named(<span class="string">&quot;echo&quot;</span>)) <span class="comment">// 对方法 echo 做增强</span></span><br><span class="line">            .intercept(FixedValue.value(<span class="string">&quot;B&quot;</span>)) <span class="comment">// 增强内容是返回一个固定值 &quot;B&quot;</span></span><br><span class="line">            .make(); <span class="comment">// 构造这个 class</span></span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; dynamicType = newClass</span><br><span class="line">            .load(EchoA.class.getClassLoader()) <span class="comment">// 使用 EchoA 的类加载器加载这个类</span></span><br><span class="line">            .getLoaded(); <span class="comment">// 获取被加载的类</span></span><br><span class="line">    <span class="type">EchoA</span> <span class="variable">echoA</span> <span class="operator">=</span> (EchoA) dynamicType.getDeclaredConstructor().newInstance(); <span class="comment">// 使用反射调用构造函数, 构造新的类的实例</span></span><br><span class="line">    System.out.println(echoA.getClass().getName()); <span class="comment">// 打印新类类名</span></span><br><span class="line">    System.out.println(echoA.echo()); <span class="comment">// 调用 echo 方法并打印结果</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面这个 main 方法动态生成了一个类, 并调用这个类的 <code>echo</code> 方法,返回了字符串 <code>&quot;B&quot;</code>.</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><h2 id="字节码视角-改变了什么"><a href="#字节码视角-改变了什么" class="headerlink" title="字节码视角: 改变了什么"></a>字节码视角: 改变了什么</h2><p>ByteBuddy 可以生成字节码,但是不会生成 Java 源码,我们就从字节码层面看看, ByteBuddy 做了什么.</p>
+<p>先看下原始的 EchoA 字节码(部分):<br><img src="/images/ByteBuddy1.jpg" alt="EchoA"></p>
+<p>echo 方法的字节码如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0 ldc #8 &lt;B&gt;</span><br><span class="line">2 areturn</span><br></pre></td></tr></table></figure>
+<p><strong>ldc</strong> 指令会将常量池中的常量入栈, 这里是将常量池第八个常量(也就是<code>&quot;A&quot;</code>) 入栈. <strong>areturn</strong> 指令将栈中数据作为返回值返回.</p>
+<p>生成的新类, 也是类似的逻辑:<br><img src="/images/ByteBuddy2.jpg" alt="EchoB"></p>
+<h2 id="源码视角-怎么实现的"><a href="#源码视角-怎么实现的" class="headerlink" title="源码视角: 怎么实现的"></a>源码视角: 怎么实现的</h2><p>ByteBuddy 是一个对 ASM 字节码框架的封装. ByteBuddy 对字节码操作做了多个层次的封装, 用户可以很方便的使用它, 但要理解它的运行原理, 有比较陡峭的学习曲线. 下面我们管中窥豹:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">DynamicType.Unloaded&lt;EchoA&gt; newClass = <span class="keyword">new</span> <span class="title class_">ByteBuddy</span>()</span><br><span class="line">        .subclass(EchoA.class) <span class="comment">// 新的类继承于 EchoA</span></span><br><span class="line">        .method(ElementMatchers.named(<span class="string">&quot;echo&quot;</span>)) <span class="comment">// 对方法名为 echo 做增强</span></span><br><span class="line">        .intercept(FixedValue.value(<span class="string">&quot;B&quot;</span>)) <span class="comment">// 增强内容是返回一个固定值 &quot;B&quot;</span></span><br><span class="line">        .make(); <span class="comment">// 构造这个 class</span></span><br></pre></td></tr></table></figure>
+
+<p>我们着重分析这段代码:<code>subclass</code>,<code>method</code>,<code>intercept</code> 这三个方法都是对 ByteBuddy 对象进行设置,没有进行具体字节码操作.</p>
+<blockquote>
+<p>由于 BtyeBuddy 框架中用了很多不可变类, 这三个方法的返回值都是一个新的 ByteBuddy 实例.</p>
+</blockquote>
+<p>最后的 <code>make</code> 方法将会进行字节码增强,产生新的类的字节码.我们具体看下 <code>make</code> 方法内部.</p>
+<p>net.bytebuddy.dynamic.DynamicType.Builder.AbstractBase.UsingTypeWriter#make(net.bytebuddy.dynamic.TypeResolutionStrategy):</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> DynamicType.Unloaded&lt;U&gt; <span class="title function_">make</span><span class="params">(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> toTypeWriter(typePool).make(typeResolutionStrategy.resolve());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>make</code> 方法内部使用会构造一个 TypeWriter 去做具体的 <code>make</code> 操作.<br>构造 TypeWriter 的过程参考下面代码的注释</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> TypeWriter&lt;T&gt; <span class="title function_">toTypeWriter</span><span class="params">(TypePool typePool)</span> &#123;</span><br><span class="line">    MethodRegistry.<span class="type">Compiled</span> <span class="variable">methodRegistry</span> <span class="operator">=</span> constructorStrategy   <span class="comment">// constructorStrategy 规定了如何构造新类的构造函数, ByteBuddy 遵循约定优于配置的原则, constructorStrategy 有一个默认值,这里我们不展开讨论.</span></span><br><span class="line">            .inject(instrumentedType, <span class="built_in">this</span>.methodRegistry) <span class="comment">// inject 将构造函数如何构造的 handler 插入 methodRegistry,并返回这个 methodRegistry</span></span><br><span class="line">            .prepare(applyConstructorStrategy(instrumentedType), <span class="comment">// prepare 方法会会根据配置 (也就是上文 method 和 intercept 方法), 将改造 echo 方法的 handler 加入 methodRegistry.</span></span><br><span class="line">            <span class="comment">// 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named(&quot;echo&quot;)) 找到需要被增强的方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value(&quot;B&quot;)) 插入到 methodRegistry</span></span><br><span class="line">                    methodGraphCompiler,</span><br><span class="line">                    typeValidation,</span><br><span class="line">                    visibilityBridgeStrategy,</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">InstrumentableMatcher</span>(ignoredMethods))</span><br><span class="line">            .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion); <span class="comment">// compile 方法会将对应的 handler 对应的 ByteCodeAppender 和 MethodAttributeAppender 和方法对应起来,并缓存起来.</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 最后将准备好的对象组织成 TypeWriter 返回</span></span><br><span class="line">    <span class="keyword">return</span> TypeWriter.Default.&lt;T&gt;forCreation(methodRegistry,</span><br><span class="line">            auxiliaryTypes,</span><br><span class="line">            fieldRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            typeAttributeAppender,</span><br><span class="line">            asmVisitorWrapper,</span><br><span class="line">            classFileVersion,</span><br><span class="line">            annotationValueFilterFactory,</span><br><span class="line">            annotationRetention,</span><br><span class="line">            auxiliaryTypeNamingStrategy,</span><br><span class="line">            implementationContextFactory,</span><br><span class="line">            typeValidation,</span><br><span class="line">            classWriterStrategy,</span><br><span class="line">            typePool);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用<code>net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create</code> create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类傻瓜.</p>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p><a target="_blank" rel="noopener" href="https://bytebuddy.net/#/tutorial">ByteBuddy 官方教程</a>: 如果想要快速上手 ByteBuddy, 看这个官方教程最直接.<br><a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/specs/jvms/se11/html/index.html">The Java® Virtual Machine Specification Java SE 11 Edition</a> 想了解字节码可以看这个文档</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/06/git_ssh_dns_problem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -200,7 +307,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 04:48:43" itemprop="dateModified" datetime="2022-12-07T04:48:43+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -283,7 +390,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 04:48:43" itemprop="dateModified" datetime="2022-12-07T04:48:43+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -386,7 +493,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 04:48:43" itemprop="dateModified" datetime="2022-12-07T04:48:43+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -656,7 +763,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 04:48:43" itemprop="dateModified" datetime="2022-12-07T04:48:43+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -772,7 +879,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
