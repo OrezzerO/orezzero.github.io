@@ -124,7 +124,7 @@ protected TypeWriter<T> toTypeWriter(TypePool typePool) {
 }
 ```
 
-构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用`net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create` create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类傻瓜.
+构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用`net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create` create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类上.
 
 
 # 附录
