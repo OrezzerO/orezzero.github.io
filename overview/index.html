@@ -200,7 +200,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -255,7 +255,7 @@
 <p><code>make</code> 方法内部使用会构造一个 TypeWriter 去做具体的 <code>make</code> 操作.<br>构造 TypeWriter 的过程参考下面代码的注释</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> TypeWriter&lt;T&gt; <span class="title function_">toTypeWriter</span><span class="params">(TypePool typePool)</span> &#123;</span><br><span class="line">    MethodRegistry.<span class="type">Compiled</span> <span class="variable">methodRegistry</span> <span class="operator">=</span> constructorStrategy   <span class="comment">// constructorStrategy 规定了如何构造新类的构造函数, ByteBuddy 遵循约定优于配置的原则, constructorStrategy 有一个默认值,这里我们不展开讨论.</span></span><br><span class="line">            .inject(instrumentedType, <span class="built_in">this</span>.methodRegistry) <span class="comment">// inject 将构造函数如何构造的 handler 插入 methodRegistry,并返回这个 methodRegistry</span></span><br><span class="line">            .prepare(applyConstructorStrategy(instrumentedType), <span class="comment">// prepare 方法会会根据配置 (也就是上文 method 和 intercept 方法), 将改造 echo 方法的 handler 加入 methodRegistry.</span></span><br><span class="line">            <span class="comment">// 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named(&quot;echo&quot;)) 找到需要被增强的方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value(&quot;B&quot;)) 插入到 methodRegistry</span></span><br><span class="line">                    methodGraphCompiler,</span><br><span class="line">                    typeValidation,</span><br><span class="line">                    visibilityBridgeStrategy,</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">InstrumentableMatcher</span>(ignoredMethods))</span><br><span class="line">            .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion); <span class="comment">// compile 方法会将对应的 handler 对应的 ByteCodeAppender 和 MethodAttributeAppender 和方法对应起来,并缓存起来.</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 最后将准备好的对象组织成 TypeWriter 返回</span></span><br><span class="line">    <span class="keyword">return</span> TypeWriter.Default.&lt;T&gt;forCreation(methodRegistry,</span><br><span class="line">            auxiliaryTypes,</span><br><span class="line">            fieldRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            typeAttributeAppender,</span><br><span class="line">            asmVisitorWrapper,</span><br><span class="line">            classFileVersion,</span><br><span class="line">            annotationValueFilterFactory,</span><br><span class="line">            annotationRetention,</span><br><span class="line">            auxiliaryTypeNamingStrategy,</span><br><span class="line">            implementationContextFactory,</span><br><span class="line">            typeValidation,</span><br><span class="line">            classWriterStrategy,</span><br><span class="line">            typePool);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用<code>net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create</code> create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类傻瓜.</p>
+<p>构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用<code>net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create</code> create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类上.</p>
 <h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p><a target="_blank" rel="noopener" href="https://bytebuddy.net/#/tutorial">ByteBuddy 官方教程</a>: 如果想要快速上手 ByteBuddy, 看这个官方教程最直接.<br><a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/specs/jvms/se11/html/index.html">The Java® Virtual Machine Specification Java SE 11 Edition</a> 想了解字节码可以看这个文档</p>
 
       
@@ -307,7 +307,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -390,7 +390,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -493,7 +493,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -763,7 +763,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 05:50:59" itemprop="dateModified" datetime="2022-12-07T05:50:59+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
