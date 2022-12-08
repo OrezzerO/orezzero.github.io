@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"orezzero.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="背景byte-buddy-agent 是 ByteBuddy 的一个组件, 用于快速构建出一个 JavaAgent. SkyWalking-java 是一个 SkyWalking 为 Java 准备的运行时代码生成器, 适配了众多中间件以提供定制的监控能力. SkyWalking-java 本质是一个 java agent ,并在其中使用了 byte-buddy-agent. 本文会介绍 SkyW">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Byte Buddy Agent 初探--以 SkyWalking-java 为例">
+<meta property="og:url" content="http://orezzero.github.io/2022/12/08/bytebuddy_agent_skywalking/index.html">
+<meta property="og:site_name" content="Orez 的博客">
+<meta property="og:description" content="背景byte-buddy-agent 是 ByteBuddy 的一个组件, 用于快速构建出一个 JavaAgent. SkyWalking-java 是一个 SkyWalking 为 Java 准备的运行时代码生成器, 适配了众多中间件以提供定制的监控能力. SkyWalking-java 本质是一个 java agent ,并在其中使用了 byte-buddy-agent. 本文会介绍 SkyW">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-12-08T12:08:24.000Z">
+<meta property="article:modified_time" content="2022-12-08T09:47:29.697Z">
+<meta property="article:author" content="Orez">
+<meta property="article:tag" content="ByteBuddy">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="javaagent">
+<meta property="article:tag" content="SkyWalking">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://orezzero.github.io/2022/12/08/bytebuddy_agent_skywalking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Byte Buddy Agent 初探--以 SkyWalking-java 为例 | Orez 的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Orez 的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-overview">
+
+    <a href="/overview" rel="section"><i class="fa fa-eye fa-fw"></i>overview</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/OrezzerO" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/08/bytebuddy_agent_skywalking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Byte Buddy Agent 初探--以 SkyWalking-java 为例
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2022-12-08 12:08:24 / Modified: 09:47:29" itemprop="dateCreated datePublished" datetime="2022-12-08T12:08:24+00:00">2022-12-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/javaagent/" itemprop="url" rel="index"><span itemprop="name">javaagent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>byte-buddy-agent 是 ByteBuddy 的一个组件, 用于快速构建出一个 JavaAgent. SkyWalking-java 是一个 SkyWalking 为 Java 准备的运行时代码生成器, 适配了众多中间件以提供定制的监控能力.</p>
+<p>SkyWalking-java 本质是一个 java agent ,并在其中使用了 byte-buddy-agent.</p>
+<p>本文会介绍 SkyWalking-agent 如何使用 byte-buddy-agent 来做到代码增强的.</p>
+<h1 id="ByteBuddy-基础用法"><a href="#ByteBuddy-基础用法" class="headerlink" title="ByteBuddy 基础用法"></a>ByteBuddy 基础用法</h1><p>在深入 SkyWalking-agent 和 byte-buddy-agent 之前, 我们先来看下 ByteBuddy 是如何在调用一个方法前后插入日志的.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryDatabase</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> List&lt;String&gt; <span class="title function_">load</span><span class="params">(String info)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.asList(info + <span class="string">&quot;: foo&quot;</span>, info + <span class="string">&quot;: bar&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LoggerInterceptor</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> List&lt;String&gt; <span class="title function_">log</span><span class="params">(<span class="meta">@SuperCall</span> Callable&lt;List&lt;String&gt;&gt; zuper)</span> <span class="comment">// SuperCall 注解用于表示 zuper 是原始方法的调用.</span></span><br><span class="line">      <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Calling database&quot;</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> zuper.call();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      System.out.println(<span class="string">&quot;Returned from database&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">MemoryDatabase</span> <span class="variable">loggingDatabase</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteBuddy</span>()</span><br><span class="line">  .subclass(MemoryDatabase.class) <span class="comment">// 被增强的类继承于 MemoryDatabase 类</span></span><br><span class="line">  .method(named(<span class="string">&quot;load&quot;</span>)) <span class="comment">// 被增强的方法名为 load</span></span><br><span class="line">  .intercept(MethodDelegation.to(LoggerInterceptor.class)) <span class="comment">// 增强方式是将方法调用代理到 LoggerInterceptor</span></span><br><span class="line">  .make() <span class="comment">// 构造出上述配置产生的类的字节码</span></span><br><span class="line">  .load(getClass().getClassLoader()) <span class="comment">// 将上述配置产生的类用过 getClass().getClassLoader() 加载到 jvm 中</span></span><br><span class="line">  .getLoaded() <span class="comment">// 获取已经加载的 Class 类对象</span></span><br><span class="line">  .newInstance(); <span class="comment">// 通过默认构造函数构造新的对象.</span></span><br></pre></td></tr></table></figure>
+
+<p>上面是一个简单的 ByteBuddy 例子. 它增强了 MemoryDatabase 类, 会在调用 MemoryDatabase.load 前后,打印输出一些信息.<br>ByteBuddy API 每行代码的含义都已经写在注释中了. 可以想象, 在SkyWalking agent 中, 也是构造了类似的代码增强, 在调用前后加入了 SkyWalking 埋点.</p>
+<h1 id="SkyWalking-java-简要分析"><a href="#SkyWalking-java-简要分析" class="headerlink" title="SkyWalking-java 简要分析"></a>SkyWalking-java 简要分析</h1><p>我们会先分析中间件如何接入 SkyWalking-java , 然后分析 SkyWalking-java 如何接入 byte-buddy-agent.</p>
+<h2 id="插件定义"><a href="#插件定义" class="headerlink" title="插件定义"></a>插件定义</h2><p>SkyWalking-java 提供了一种比较简单的 API ,来供中间件接入. 我们以 SOFA RPC 为例子看下.</p>
+<p>一个埋点的接入代码只有两个类,以及一个配置文件,直接上代码:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcConsumerInstrumentation.java">SofaRpcConsumerInstrumentation.java:</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SofaRpcConsumerInstrumentation</span> <span class="keyword">extends</span> <span class="title class_">ClassInstanceMethodsEnhancePluginDefine</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">ENHANCE_CLASS</span> <span class="operator">=</span> <span class="string">&quot;com.alipay.sofa.rpc.filter.ConsumerInvoker&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">INTERCEPT_CLASS</span> <span class="operator">=</span> <span class="string">&quot;org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInterceptor&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> ClassMatch <span class="title function_">enhanceClass</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> NameMatch.byName(ENHANCE_CLASS);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> ConstructorInterceptPoint[] getConstructorsInterceptPoints() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> InstanceMethodsInterceptPoint[] getInstanceMethodsInterceptPoints() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">InstanceMethodsInterceptPoint</span>[] &#123;</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">InstanceMethodsInterceptPoint</span>() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> ElementMatcher&lt;MethodDescription&gt; <span class="title function_">getMethodsMatcher</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> named(<span class="string">&quot;invoke&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> String <span class="title function_">getMethodsInterceptor</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> INTERCEPT_CLASS;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isOverrideArgs</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SofaRpcConsumerInstrumentation 继承了 ClassInstanceMethodsEnhancePluginDefine ,定义了 SOFA RPC 插件如何工作,它通过接口指定了三个属性:</p>
+<ol>
+<li>enhanceClass: 需要增强哪个类, 这里是增强 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker</code></li>
+<li>getConstructorsInterceptPoints: 指定构造函数如何增强: 这个插件不需要构造函数增强</li>
+<li>getInstanceMethodsInterceptPoints: 指定方法如何增强, 这里返回了一个 <code>InstanceMethodsInterceptPoint</code> 数组, 数组中每个元素代表一个增强点</li>
+</ol>
+<p>接着我们看下 <code>InstanceMethodsInterceptPoint</code> 是怎么定义的:</p>
+<ul>
+<li>getMethodsMatcher: 指定了如何找到需要增强的方法, 这里指定的是名为 <code>invoke</code> 的方法</li>
+<li>getMethodsInterceptor: 指定如何增强刚刚指定的<code>invoke</code>方法, 这里指定的是 <code>org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInterceptor</code>类, 这个类下文会分析.</li>
+<li>isOverrideArgs: 这个属性指定了是否需要修改修改 <code>invoke</code> 的入参,这个例子中我们不需要修改,所以返回 <code>false</code></li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcConsumerInterceptor.java">SofaRpcConsumerInterceptor.java:</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SofaRpcConsumerInterceptor</span> <span class="keyword">implements</span> <span class="title class_">InstanceMethodsAroundInterceptor</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">SKYWALKING_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;skywalking.&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">beforeMethod</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments, Class&lt;?&gt;[] argumentsTypes,</span></span><br><span class="line"><span class="params">                             MethodInterceptResult result)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="comment">// 省略一些代码</span></span><br><span class="line">        <span class="keyword">final</span> <span class="type">ContextCarrier</span> <span class="variable">contextCarrier</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ContextCarrier</span>();</span><br><span class="line">        <span class="keyword">final</span> <span class="type">String</span> <span class="variable">operationName</span> <span class="operator">=</span> generateOperationName(providerInfo, sofaRequest);</span><br><span class="line">        <span class="type">AbstractSpan</span> <span class="variable">span</span> <span class="operator">=</span> ContextManager.createExitSpan(operationName, contextCarrier, host + <span class="string">&quot;:&quot;</span> + port);</span><br><span class="line">        span.setComponent(ComponentsDefine.SOFARPC);</span><br><span class="line">        SpanLayer.asRPCFramework(span);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">afterMethod</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments, Class&lt;?&gt;[] argumentsTypes,</span></span><br><span class="line"><span class="params">                              Object ret)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">SofaResponse</span> <span class="variable">result</span> <span class="operator">=</span> (SofaResponse) ret;</span><br><span class="line">        <span class="keyword">if</span> (result != <span class="literal">null</span> &amp;&amp; result.isError()) &#123;</span><br><span class="line">            dealException((Throwable) result.getAppResponse());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ContextManager.stopSpan();</span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleMethodException</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments,</span></span><br><span class="line"><span class="params">                                      Class&lt;?&gt;[] argumentsTypes, Throwable t)</span> &#123;</span><br><span class="line">        dealException(t);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>SofaRpcConsumerInterceptor</code> 会重载三个方法, 分别在 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker#invoke()</code> 调用之前,之后,以及发生异常时被回调.</p>
+<p>配置文件为:<br><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/resources/skywalking-plugin.def">skywalking-plugin.def</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sofarpc=org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInstrumentation</span><br></pre></td></tr></table></figure>
+<p>这里面配置了 <code>SofaRpcConsumerInstrumentation</code> 类.</p>
+<h2 id="适配-ByteBuddy"><a href="#适配-ByteBuddy" class="headerlink" title="适配 ByteBuddy"></a>适配 ByteBuddy</h2><p>通过上文的配文件,SkyWalking-java 可以获取到所有的 PluginDefine 类. SkyWalking-java 会加载这些类, 并将他们统一交给 <code>PluginFinder</code> 管理.</p>
+<p><code>PluginFinder</code> 的 <code>buildMatch()</code> 方法生成一个 ElementMatcher 来匹配到所有需要被加载的类型. 以 SOFA RPC 为例就是 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker</code> 类.</p>
+<p><code>PluginFinder</code> 会被传递给 <code>org.apache.skywalking.apm.agent.SkyWalkingAgent.Transformer</code> 来构造一个 <code>AgentBuilder.Transformer</code>. 可以被上面 ElementMatcher 匹配的类,都会被 Transformer 增强.</p>
+<p>增强逻辑如下:</p>
+<ul>
+<li>处理每个匹配 ElementMatcher 的类</li>
+<li>通过 <code>PluginFinder</code> 找到这个类对应的 <code>PluginDefine</code></li>
+<li>调用 <code>PluginDefine</code> 的 <code>define</code> 方法对方法进行增强:<ul>
+<li>获取 <code>PluginDefine</code> 定义的 <code>InstanceMethodsInterceptPoints</code></li>
+<li>遍历 <code>InstanceMethodsInterceptPoints</code>, 通过 <code>MethodsMatcher</code> 确定需要增强的方法, 通过 <code>getMethodsInterceptor</code> 获取如何增强方法. 并将 Interceptor 注入到 <code>InstMethodsInter</code> 中.</li>
+<li>将 <code>MethodsMatcher</code> 和 <code>InstMethodsInter</code> 传递给 ByteBuddy 就完成了 JavaAgent 的配置.</li>
+</ul>
+</li>
+</ul>
+<p>下面我们看下 <code>InstMethodsInter</code> 是什么:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InstMethodsInter</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">ILog</span> <span class="variable">LOGGER</span> <span class="operator">=</span> LogManager.getLogger(InstMethodsInter.class);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * An &#123;<span class="doctag">@link</span> InstanceMethodsAroundInterceptor&#125; This name should only stay in &#123;<span class="doctag">@link</span> String&#125;, the real &#123;<span class="doctag">@link</span> Class&#125;</span></span><br><span class="line"><span class="comment">     * type will trigger classloader failure. If you want to know more, please check on books about Classloader or</span></span><br><span class="line"><span class="comment">     * Classloader appointment mechanism.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> InstanceMethodsAroundInterceptor interceptor;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> instanceMethodsAroundInterceptorClassName class full name.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">InstMethodsInter</span><span class="params">(String instanceMethodsAroundInterceptorClassName, ClassLoader classLoader)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            interceptor = InterceptorInstanceLoader.load(instanceMethodsAroundInterceptorClassName, classLoader);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">PluginException</span>(<span class="string">&quot;Can&#x27;t create InstanceMethodsAroundInterceptor.&quot;</span>, t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Intercept the target instance method.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> obj          target class instance.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> allArguments all method arguments</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> method       method description.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> zuper        the origin call ref.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the return value of target instance method.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Exception only throw exception because of zuper.call() or unexpected exception in sky-walking ( This is a</span></span><br><span class="line"><span class="comment">     *                   bug, if anything triggers this condition ).</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@RuntimeType</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">intercept</span><span class="params">(<span class="meta">@This</span> Object obj, <span class="meta">@AllArguments</span> Object[] allArguments, <span class="meta">@SuperCall</span> Callable&lt;?&gt; zuper,</span></span><br><span class="line"><span class="params">        <span class="meta">@Origin</span> Method method)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">EnhancedInstance</span> <span class="variable">targetObject</span> <span class="operator">=</span> (EnhancedInstance) obj;</span><br><span class="line"></span><br><span class="line">        <span class="type">MethodInterceptResult</span> <span class="variable">result</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MethodInterceptResult</span>();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            interceptor.beforeMethod(targetObject, method, allArguments, method.getParameterTypes(), result);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            LOGGER.error(t, <span class="string">&quot;class[&#123;&#125;] before method[&#123;&#125;] intercept failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (!result.isContinue()) &#123;</span><br><span class="line">                ret = result._ret();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                ret = zuper.call();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                interceptor.handleMethodException(targetObject, method, allArguments, method.getParameterTypes(), t);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t2) &#123;</span><br><span class="line">                LOGGER.error(t2, <span class="string">&quot;class[&#123;&#125;] handle method[&#123;&#125;] exception failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">throw</span> t;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                ret = interceptor.afterMethod(targetObject, method, allArguments, method.getParameterTypes(), ret);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                LOGGER.error(t, <span class="string">&quot;class[&#123;&#125;] after method[&#123;&#125;] intercept failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><code>InstMethodsInter</code> 与上文 <em>ByteBuddy 基础用法</em> 中的 <code>LoggerInterceptor</code> 是同一类型的东西, ByteBuddy 会将需要增强的类代理给 <code>intercept</code> 方法. 可以看 <code>intercept</code> 方法的参数上都带上了 <code>ByteBuddy</code> 的注解:</p>
+<ul>
+<li><strong>This</strong>: 代表当前代理类的实例</li>
+<li><strong>AllArguments</strong>: 原始调用的参数列表</li>
+<li><strong>SuperCall</strong>: 代表原始调用</li>
+<li><strong>Origin</strong>: 代表原始方法</li>
+</ul>
+<p>通过 <code>InstMethodsInter</code> , SkyWalking-java 在需要增强的方法前后及异常处理阶段增加了一些回调, 回调给 <code>PluginDefine</code> 中定义的 <code>Interceptor</code>.</p>
+<h1 id="ByteBuddy-Agent-原理简介"><a href="#ByteBuddy-Agent-原理简介" class="headerlink" title="ByteBuddy Agent  原理简介"></a>ByteBuddy Agent  原理简介</h1><p>在开始社介绍 ByteBuddy 原理之前, 可以先看下 <a href="/2022/11/24/javaagent_introduction/">Java Agent 原理简介</a> 来回顾下原生 javaagent 是怎么工作的:</p>
+<p>我们向 <code>Instrumentation</code> 注册一些 <code>Transformer</code>,在类加载期间 <code>Transformer</code> 的 <code>transform</code> 方法就会被调用. <code>transform</code> 方法会修改类的二进制表示(字节码), 从而实现类增强.</p>
+<p>那么 ByteBuddy 是如何适配原生 javaagent 这种模式的呢?</p>
+<p>ByteBuddy 内部有一个适配器 <code>net.bytebuddy.agent.builder.AgentBuilder.Default.ExecutingTransformer</code> 将原生 transform 方法适配到 <code>net.bytebuddy.agent.builder.AgentBuilder.Transformer</code> 的方法上. 然后通过 <code>net.bytebuddy.dynamic.DynamicType.Builder</code> 构造新的类的字节码, 返回给 <code>Instrumentation</code>.</p>
+
+    </div>
+
+    
+    
+    
+        <p>如果你对本文有任何疑惑, 或者本文有需要指正的地方, 可以看下 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues">Issue 列表</a>是否有类似 issue, 如果没有的话欢迎 <a target="_blank" rel="noopener" href="https://github.com/OrezzerO/orezzero.github.io/issues/new">提交 Issue</a> 共同讨论.</p>
+
+
+<div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/WeChatPay.jpeg" alt="Orez WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/Alipay.jpeg" alt="Orez Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ByteBuddy/" rel="tag"># ByteBuddy</a>
+              <a href="/tags/java/" rel="tag"># java</a>
+              <a href="/tags/javaagent/" rel="tag"># javaagent</a>
+              <a href="/tags/SkyWalking/" rel="tag"># SkyWalking</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/12/06/byte_buddy_simple_example_intro/" rel="prev" title="一个简单的 Byte Buddy 例子及原理简述">
+      <i class="fa fa-chevron-left"></i> 一个简单的 Byte Buddy 例子及原理简述
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ByteBuddy-%E5%9F%BA%E7%A1%80%E7%94%A8%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">ByteBuddy 基础用法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SkyWalking-java-%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">SkyWalking-java 简要分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%92%E4%BB%B6%E5%AE%9A%E4%B9%89"><span class="nav-number">3.1.</span> <span class="nav-text">插件定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%82%E9%85%8D-ByteBuddy"><span class="nav-number">3.2.</span> <span class="nav-text">适配 ByteBuddy</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ByteBuddy-Agent-%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B"><span class="nav-number">4.</span> <span class="nav-text">ByteBuddy Agent  原理简介</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Orez"
+      src="https://avatars.githubusercontent.com/u/13081689?v=4">
+  <p class="site-author-name" itemprop="name">Orez</p>
+  <div class="site-description" itemprop="description">分享我的日常技术博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/OrezzerO" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;OrezzerO" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:orezzero@163.com" title="E-Mail → mailto:orezzero@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Orez</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

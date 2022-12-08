@@ -169,6 +169,141 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/08/bytebuddy_agent_skywalking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/12/08/bytebuddy_agent_skywalking/" class="post-title-link" itemprop="url">Byte Buddy Agent 初探--以 SkyWalking-java 为例</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2022-12-08 12:08:24 / Modified: 09:47:29" itemprop="dateCreated datePublished" datetime="2022-12-08T12:08:24+00:00">2022-12-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/javaagent/" itemprop="url" rel="index"><span itemprop="name">javaagent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>byte-buddy-agent 是 ByteBuddy 的一个组件, 用于快速构建出一个 JavaAgent. SkyWalking-java 是一个 SkyWalking 为 Java 准备的运行时代码生成器, 适配了众多中间件以提供定制的监控能力.</p>
+<p>SkyWalking-java 本质是一个 java agent ,并在其中使用了 byte-buddy-agent.</p>
+<p>本文会介绍 SkyWalking-agent 如何使用 byte-buddy-agent 来做到代码增强的.</p>
+<h1 id="ByteBuddy-基础用法"><a href="#ByteBuddy-基础用法" class="headerlink" title="ByteBuddy 基础用法"></a>ByteBuddy 基础用法</h1><p>在深入 SkyWalking-agent 和 byte-buddy-agent 之前, 我们先来看下 ByteBuddy 是如何在调用一个方法前后插入日志的.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryDatabase</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> List&lt;String&gt; <span class="title function_">load</span><span class="params">(String info)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.asList(info + <span class="string">&quot;: foo&quot;</span>, info + <span class="string">&quot;: bar&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LoggerInterceptor</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> List&lt;String&gt; <span class="title function_">log</span><span class="params">(<span class="meta">@SuperCall</span> Callable&lt;List&lt;String&gt;&gt; zuper)</span> <span class="comment">// SuperCall 注解用于表示 zuper 是原始方法的调用.</span></span><br><span class="line">      <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Calling database&quot;</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> zuper.call();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      System.out.println(<span class="string">&quot;Returned from database&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">MemoryDatabase</span> <span class="variable">loggingDatabase</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteBuddy</span>()</span><br><span class="line">  .subclass(MemoryDatabase.class) <span class="comment">// 被增强的类继承于 MemoryDatabase 类</span></span><br><span class="line">  .method(named(<span class="string">&quot;load&quot;</span>)) <span class="comment">// 被增强的方法名为 load</span></span><br><span class="line">  .intercept(MethodDelegation.to(LoggerInterceptor.class)) <span class="comment">// 增强方式是将方法调用代理到 LoggerInterceptor</span></span><br><span class="line">  .make() <span class="comment">// 构造出上述配置产生的类的字节码</span></span><br><span class="line">  .load(getClass().getClassLoader()) <span class="comment">// 将上述配置产生的类用过 getClass().getClassLoader() 加载到 jvm 中</span></span><br><span class="line">  .getLoaded() <span class="comment">// 获取已经加载的 Class 类对象</span></span><br><span class="line">  .newInstance(); <span class="comment">// 通过默认构造函数构造新的对象.</span></span><br></pre></td></tr></table></figure>
+
+<p>上面是一个简单的 ByteBuddy 例子. 它增强了 MemoryDatabase 类, 会在调用 MemoryDatabase.load 前后,打印输出一些信息.<br>ByteBuddy API 每行代码的含义都已经写在注释中了. 可以想象, 在SkyWalking agent 中, 也是构造了类似的代码增强, 在调用前后加入了 SkyWalking 埋点.</p>
+<h1 id="SkyWalking-java-简要分析"><a href="#SkyWalking-java-简要分析" class="headerlink" title="SkyWalking-java 简要分析"></a>SkyWalking-java 简要分析</h1><p>我们会先分析中间件如何接入 SkyWalking-java , 然后分析 SkyWalking-java 如何接入 byte-buddy-agent.</p>
+<h2 id="插件定义"><a href="#插件定义" class="headerlink" title="插件定义"></a>插件定义</h2><p>SkyWalking-java 提供了一种比较简单的 API ,来供中间件接入. 我们以 SOFA RPC 为例子看下.</p>
+<p>一个埋点的接入代码只有两个类,以及一个配置文件,直接上代码:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcConsumerInstrumentation.java">SofaRpcConsumerInstrumentation.java:</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SofaRpcConsumerInstrumentation</span> <span class="keyword">extends</span> <span class="title class_">ClassInstanceMethodsEnhancePluginDefine</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">ENHANCE_CLASS</span> <span class="operator">=</span> <span class="string">&quot;com.alipay.sofa.rpc.filter.ConsumerInvoker&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">INTERCEPT_CLASS</span> <span class="operator">=</span> <span class="string">&quot;org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInterceptor&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> ClassMatch <span class="title function_">enhanceClass</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> NameMatch.byName(ENHANCE_CLASS);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> ConstructorInterceptPoint[] getConstructorsInterceptPoints() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> InstanceMethodsInterceptPoint[] getInstanceMethodsInterceptPoints() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">InstanceMethodsInterceptPoint</span>[] &#123;</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">InstanceMethodsInterceptPoint</span>() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> ElementMatcher&lt;MethodDescription&gt; <span class="title function_">getMethodsMatcher</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> named(<span class="string">&quot;invoke&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> String <span class="title function_">getMethodsInterceptor</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> INTERCEPT_CLASS;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isOverrideArgs</span><span class="params">()</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SofaRpcConsumerInstrumentation 继承了 ClassInstanceMethodsEnhancePluginDefine ,定义了 SOFA RPC 插件如何工作,它通过接口指定了三个属性:</p>
+<ol>
+<li>enhanceClass: 需要增强哪个类, 这里是增强 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker</code></li>
+<li>getConstructorsInterceptPoints: 指定构造函数如何增强: 这个插件不需要构造函数增强</li>
+<li>getInstanceMethodsInterceptPoints: 指定方法如何增强, 这里返回了一个 <code>InstanceMethodsInterceptPoint</code> 数组, 数组中每个元素代表一个增强点</li>
+</ol>
+<p>接着我们看下 <code>InstanceMethodsInterceptPoint</code> 是怎么定义的:</p>
+<ul>
+<li>getMethodsMatcher: 指定了如何找到需要增强的方法, 这里指定的是名为 <code>invoke</code> 的方法</li>
+<li>getMethodsInterceptor: 指定如何增强刚刚指定的<code>invoke</code>方法, 这里指定的是 <code>org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInterceptor</code>类, 这个类下文会分析.</li>
+<li>isOverrideArgs: 这个属性指定了是否需要修改修改 <code>invoke</code> 的入参,这个例子中我们不需要修改,所以返回 <code>false</code></li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcConsumerInterceptor.java">SofaRpcConsumerInterceptor.java:</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SofaRpcConsumerInterceptor</span> <span class="keyword">implements</span> <span class="title class_">InstanceMethodsAroundInterceptor</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">SKYWALKING_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;skywalking.&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">beforeMethod</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments, Class&lt;?&gt;[] argumentsTypes,</span></span><br><span class="line"><span class="params">                             MethodInterceptResult result)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="comment">// 省略一些代码</span></span><br><span class="line">        <span class="keyword">final</span> <span class="type">ContextCarrier</span> <span class="variable">contextCarrier</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ContextCarrier</span>();</span><br><span class="line">        <span class="keyword">final</span> <span class="type">String</span> <span class="variable">operationName</span> <span class="operator">=</span> generateOperationName(providerInfo, sofaRequest);</span><br><span class="line">        <span class="type">AbstractSpan</span> <span class="variable">span</span> <span class="operator">=</span> ContextManager.createExitSpan(operationName, contextCarrier, host + <span class="string">&quot;:&quot;</span> + port);</span><br><span class="line">        span.setComponent(ComponentsDefine.SOFARPC);</span><br><span class="line">        SpanLayer.asRPCFramework(span);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">afterMethod</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments, Class&lt;?&gt;[] argumentsTypes,</span></span><br><span class="line"><span class="params">                              Object ret)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">SofaResponse</span> <span class="variable">result</span> <span class="operator">=</span> (SofaResponse) ret;</span><br><span class="line">        <span class="keyword">if</span> (result != <span class="literal">null</span> &amp;&amp; result.isError()) &#123;</span><br><span class="line">            dealException((Throwable) result.getAppResponse());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ContextManager.stopSpan();</span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleMethodException</span><span class="params">(EnhancedInstance objInst, Method method, Object[] allArguments,</span></span><br><span class="line"><span class="params">                                      Class&lt;?&gt;[] argumentsTypes, Throwable t)</span> &#123;</span><br><span class="line">        dealException(t);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>SofaRpcConsumerInterceptor</code> 会重载三个方法, 分别在 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker#invoke()</code> 调用之前,之后,以及发生异常时被回调.</p>
+<p>配置文件为:<br><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/resources/skywalking-plugin.def">skywalking-plugin.def</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sofarpc=org.apache.skywalking.apm.plugin.sofarpc.SofaRpcConsumerInstrumentation</span><br></pre></td></tr></table></figure>
+<p>这里面配置了 <code>SofaRpcConsumerInstrumentation</code> 类.</p>
+<h2 id="适配-ByteBuddy"><a href="#适配-ByteBuddy" class="headerlink" title="适配 ByteBuddy"></a>适配 ByteBuddy</h2><p>通过上文的配文件,SkyWalking-java 可以获取到所有的 PluginDefine 类. SkyWalking-java 会加载这些类, 并将他们统一交给 <code>PluginFinder</code> 管理.</p>
+<p><code>PluginFinder</code> 的 <code>buildMatch()</code> 方法生成一个 ElementMatcher 来匹配到所有需要被加载的类型. 以 SOFA RPC 为例就是 <code>com.alipay.sofa.rpc.filter.ConsumerInvoker</code> 类.</p>
+<p><code>PluginFinder</code> 会被传递给 <code>org.apache.skywalking.apm.agent.SkyWalkingAgent.Transformer</code> 来构造一个 <code>AgentBuilder.Transformer</code>. 可以被上面 ElementMatcher 匹配的类,都会被 Transformer 增强.</p>
+<p>增强逻辑如下:</p>
+<ul>
+<li>处理每个匹配 ElementMatcher 的类</li>
+<li>通过 <code>PluginFinder</code> 找到这个类对应的 <code>PluginDefine</code></li>
+<li>调用 <code>PluginDefine</code> 的 <code>define</code> 方法对方法进行增强:<ul>
+<li>获取 <code>PluginDefine</code> 定义的 <code>InstanceMethodsInterceptPoints</code></li>
+<li>遍历 <code>InstanceMethodsInterceptPoints</code>, 通过 <code>MethodsMatcher</code> 确定需要增强的方法, 通过 <code>getMethodsInterceptor</code> 获取如何增强方法. 并将 Interceptor 注入到 <code>InstMethodsInter</code> 中.</li>
+<li>将 <code>MethodsMatcher</code> 和 <code>InstMethodsInter</code> 传递给 ByteBuddy 就完成了 JavaAgent 的配置.</li>
+</ul>
+</li>
+</ul>
+<p>下面我们看下 <code>InstMethodsInter</code> 是什么:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InstMethodsInter</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">ILog</span> <span class="variable">LOGGER</span> <span class="operator">=</span> LogManager.getLogger(InstMethodsInter.class);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * An &#123;<span class="doctag">@link</span> InstanceMethodsAroundInterceptor&#125; This name should only stay in &#123;<span class="doctag">@link</span> String&#125;, the real &#123;<span class="doctag">@link</span> Class&#125;</span></span><br><span class="line"><span class="comment">     * type will trigger classloader failure. If you want to know more, please check on books about Classloader or</span></span><br><span class="line"><span class="comment">     * Classloader appointment mechanism.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> InstanceMethodsAroundInterceptor interceptor;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> instanceMethodsAroundInterceptorClassName class full name.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">InstMethodsInter</span><span class="params">(String instanceMethodsAroundInterceptorClassName, ClassLoader classLoader)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            interceptor = InterceptorInstanceLoader.load(instanceMethodsAroundInterceptorClassName, classLoader);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">PluginException</span>(<span class="string">&quot;Can&#x27;t create InstanceMethodsAroundInterceptor.&quot;</span>, t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Intercept the target instance method.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> obj          target class instance.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> allArguments all method arguments</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> method       method description.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> zuper        the origin call ref.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the return value of target instance method.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Exception only throw exception because of zuper.call() or unexpected exception in sky-walking ( This is a</span></span><br><span class="line"><span class="comment">     *                   bug, if anything triggers this condition ).</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@RuntimeType</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">intercept</span><span class="params">(<span class="meta">@This</span> Object obj, <span class="meta">@AllArguments</span> Object[] allArguments, <span class="meta">@SuperCall</span> Callable&lt;?&gt; zuper,</span></span><br><span class="line"><span class="params">        <span class="meta">@Origin</span> Method method)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">EnhancedInstance</span> <span class="variable">targetObject</span> <span class="operator">=</span> (EnhancedInstance) obj;</span><br><span class="line"></span><br><span class="line">        <span class="type">MethodInterceptResult</span> <span class="variable">result</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MethodInterceptResult</span>();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            interceptor.beforeMethod(targetObject, method, allArguments, method.getParameterTypes(), result);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            LOGGER.error(t, <span class="string">&quot;class[&#123;&#125;] before method[&#123;&#125;] intercept failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (!result.isContinue()) &#123;</span><br><span class="line">                ret = result._ret();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                ret = zuper.call();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                interceptor.handleMethodException(targetObject, method, allArguments, method.getParameterTypes(), t);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t2) &#123;</span><br><span class="line">                LOGGER.error(t2, <span class="string">&quot;class[&#123;&#125;] handle method[&#123;&#125;] exception failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">throw</span> t;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                ret = interceptor.afterMethod(targetObject, method, allArguments, method.getParameterTypes(), ret);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                LOGGER.error(t, <span class="string">&quot;class[&#123;&#125;] after method[&#123;&#125;] intercept failure&quot;</span>, obj.getClass(), method.getName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><code>InstMethodsInter</code> 与上文 <em>ByteBuddy 基础用法</em> 中的 <code>LoggerInterceptor</code> 是同一类型的东西, ByteBuddy 会将需要增强的类代理给 <code>intercept</code> 方法. 可以看 <code>intercept</code> 方法的参数上都带上了 <code>ByteBuddy</code> 的注解:</p>
+<ul>
+<li><strong>This</strong>: 代表当前代理类的实例</li>
+<li><strong>AllArguments</strong>: 原始调用的参数列表</li>
+<li><strong>SuperCall</strong>: 代表原始调用</li>
+<li><strong>Origin</strong>: 代表原始方法</li>
+</ul>
+<p>通过 <code>InstMethodsInter</code> , SkyWalking-java 在需要增强的方法前后及异常处理阶段增加了一些回调, 回调给 <code>PluginDefine</code> 中定义的 <code>Interceptor</code>.</p>
+<h1 id="ByteBuddy-Agent-原理简介"><a href="#ByteBuddy-Agent-原理简介" class="headerlink" title="ByteBuddy Agent  原理简介"></a>ByteBuddy Agent  原理简介</h1><p>在开始社介绍 ByteBuddy 原理之前, 可以先看下 <a href="/2022/11/24/javaagent_introduction/">Java Agent 原理简介</a> 来回顾下原生 javaagent 是怎么工作的:</p>
+<p>我们向 <code>Instrumentation</code> 注册一些 <code>Transformer</code>,在类加载期间 <code>Transformer</code> 的 <code>transform</code> 方法就会被调用. <code>transform</code> 方法会修改类的二进制表示(字节码), 从而实现类增强.</p>
+<p>那么 ByteBuddy 是如何适配原生 javaagent 这种模式的呢?</p>
+<p>ByteBuddy 内部有一个适配器 <code>net.bytebuddy.agent.builder.AgentBuilder.Default.ExecutingTransformer</code> 将原生 transform 方法适配到 <code>net.bytebuddy.agent.builder.AgentBuilder.Transformer</code> 的方法上. 然后通过 <code>net.bytebuddy.dynamic.DynamicType.Builder</code> 构造新的类的字节码, 返回给 <code>Instrumentation</code>.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/06/byte_buddy_simple_example_intro/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -200,7 +335,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -213,6 +348,10 @@
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/javaagent/" itemprop="url" rel="index"><span itemprop="name">javaagent</span></a>
                 </span>
             </span>
 
@@ -253,7 +392,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> DynamicType.Unloaded&lt;U&gt; <span class="title function_">make</span><span class="params">(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> toTypeWriter(typePool).make(typeResolutionStrategy.resolve());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p><code>make</code> 方法内部使用会构造一个 TypeWriter 去做具体的 <code>make</code> 操作.<br>构造 TypeWriter 的过程参考下面代码的注释</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> TypeWriter&lt;T&gt; <span class="title function_">toTypeWriter</span><span class="params">(TypePool typePool)</span> &#123;</span><br><span class="line">    MethodRegistry.<span class="type">Compiled</span> <span class="variable">methodRegistry</span> <span class="operator">=</span> constructorStrategy   <span class="comment">// constructorStrategy 规定了如何构造新类的构造函数, ByteBuddy 遵循约定优于配置的原则, constructorStrategy 有一个默认值,这里我们不展开讨论.</span></span><br><span class="line">            .inject(instrumentedType, <span class="built_in">this</span>.methodRegistry) <span class="comment">// inject 将构造函数如何构造的 handler 插入 methodRegistry,并返回这个 methodRegistry</span></span><br><span class="line">            .prepare(applyConstructorStrategy(instrumentedType), <span class="comment">// prepare 方法会会根据配置 (也就是上文 method 和 intercept 方法), 将改造 echo 方法的 handler 加入 methodRegistry.</span></span><br><span class="line">            <span class="comment">// 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named(&quot;echo&quot;)) 找到需要被增强的方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value(&quot;B&quot;)) 插入到 methodRegistry</span></span><br><span class="line">                    methodGraphCompiler,</span><br><span class="line">                    typeValidation,</span><br><span class="line">                    visibilityBridgeStrategy,</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">InstrumentableMatcher</span>(ignoredMethods))</span><br><span class="line">            .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion); <span class="comment">// compile 方法会将对应的 handler 对应的 ByteCodeAppender 和 MethodAttributeAppender 和方法对应起来,并缓存起来.</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 最后将准备好的对象组织成 TypeWriter 返回</span></span><br><span class="line">    <span class="keyword">return</span> TypeWriter.Default.&lt;T&gt;forCreation(methodRegistry,</span><br><span class="line">            auxiliaryTypes,</span><br><span class="line">            fieldRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            typeAttributeAppender,</span><br><span class="line">            asmVisitorWrapper,</span><br><span class="line">            classFileVersion,</span><br><span class="line">            annotationValueFilterFactory,</span><br><span class="line">            annotationRetention,</span><br><span class="line">            auxiliaryTypeNamingStrategy,</span><br><span class="line">            implementationContextFactory,</span><br><span class="line">            typeValidation,</span><br><span class="line">            classWriterStrategy,</span><br><span class="line">            typePool);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> TypeWriter&lt;T&gt; <span class="title function_">toTypeWriter</span><span class="params">(TypePool typePool)</span> &#123;</span><br><span class="line">    MethodRegistry.<span class="type">Compiled</span> <span class="variable">methodRegistry</span> <span class="operator">=</span> constructorStrategy   <span class="comment">// constructorStrategy 规定了如何构造新类的构造函数, ByteBuddy 遵循约定优于配置的原则, constructorStrategy 有一个默认值,这里我们不展开讨论.</span></span><br><span class="line">            .inject(instrumentedType, <span class="built_in">this</span>.methodRegistry) <span class="comment">// inject 将构造函数如何构造的 handler 插入 methodRegistry,并返回这个 methodRegistry</span></span><br><span class="line">            .prepare(applyConstructorStrategy(instrumentedType), <span class="comment">// prepare 方法会会根据配置 (也就是上文 method 和 intercept 方法), 将改造 echo 方法的 handler 加入 methodRegistry.</span></span><br><span class="line">            <span class="comment">// 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named(&quot;echo&quot;)) 找到需要被增强的</span></span><br><span class="line">            方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value(<span class="string">&quot;B&quot;</span>)) 插入到 methodRegistry</span><br><span class="line">                    methodGraphCompiler,</span><br><span class="line">                    typeValidation,</span><br><span class="line">                    visibilityBridgeStrategy,</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">InstrumentableMatcher</span>(ignoredMethods))</span><br><span class="line">            .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion); <span class="comment">// compile 方法会将对应的 handler 对应的 ByteCodeAppender 和 MethodAttributeAppender 和方法对应起来,并缓存起来.</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 最后将准备好的对象组织成 TypeWriter 返回</span></span><br><span class="line">    <span class="keyword">return</span> TypeWriter.Default.&lt;T&gt;forCreation(methodRegistry,</span><br><span class="line">            auxiliaryTypes,</span><br><span class="line">            fieldRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),</span><br><span class="line">            typeAttributeAppender,</span><br><span class="line">            asmVisitorWrapper,</span><br><span class="line">            classFileVersion,</span><br><span class="line">            annotationValueFilterFactory,</span><br><span class="line">            annotationRetention,</span><br><span class="line">            auxiliaryTypeNamingStrategy,</span><br><span class="line">            implementationContextFactory,</span><br><span class="line">            typeValidation,</span><br><span class="line">            classWriterStrategy,</span><br><span class="line">            typePool);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>构造完成 TypeWriter 之后, 通过 make 方法最终构造出新的类的字节码, make 方法调用<code>net.bytebuddy.dynamic.scaffold.TypeWriter.Default.ForCreation#create</code> create 方法, create 方法调用 ASM 框架的方法, 将上述准备好的 ByteCodeAppender 应用到被增强的类上.</p>
 <h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p><a target="_blank" rel="noopener" href="https://bytebuddy.net/#/tutorial">ByteBuddy 官方教程</a>: 如果想要快速上手 ByteBuddy, 看这个官方教程最直接.<br><a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/specs/jvms/se11/html/index.html">The Java® Virtual Machine Specification Java SE 11 Edition</a> 想了解字节码可以看这个文档</p>
@@ -307,7 +446,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -390,7 +529,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -402,7 +541,7 @@
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CS/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                  <a href="/categories/CS/Common/" itemprop="url" rel="index"><span itemprop="name">Common</span></a>
                 </span>
             </span>
 
@@ -462,6 +601,158 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/24/javaagent_introduction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/11/24/javaagent_introduction/" class="post-title-link" itemprop="url">Java Agent 原理简介</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-11-24 15:02:39" itemprop="dateCreated datePublished" datetime="2022-11-24T15:02:39+00:00">2022-11-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/javaagent/" itemprop="url" rel="index"><span itemprop="name">javaagent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Java-Agent-是什么"><a href="#Java-Agent-是什么" class="headerlink" title="Java Agent 是什么"></a>Java Agent 是什么</h1><p>Java Agent 是一种可以动态修改 Java 类字节码的技术.</p>
+<p>使用 Java Agent 通常是为了动态增加应用的功能,但这些功能和主体业务逻辑是不耦合的, 比如说各种监控\诊断工具,甚至有公司拿它来实现 Service Mesh.<br>举两个例子:</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java">SkyWalking-java</a> SkyWalking 社区推出的 Java Agent, 用于Java 应用快速接入 SkyWalking</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/alibaba/arthas">Arthas</a> 是 Alibaba 推出的 Java 诊断工具.</li>
+<li>阿里云 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/HjQUvTlAXuI3y_azlSh2Pw">Spring Cloud 应用 Proxyless Mesh 模式探索与实践</a></li>
+</ol>
+<p>上面两者均是基于 Java Agent 实现的.</p>
+<p>使用 Java Agent 可以实现如下技术目标:</p>
+<ol>
+<li>对源代码<strong>无侵入</strong>的情况下, 完成功能的添加: SkyWalking-java 主要利用这一特性, 当我们有很多系统都需要接入监控埋点时, 就不需要升级每一个应用了, 添加 Java Agent 即可.</li>
+<li><strong>运行时动态</strong>修改功能,实现热部署. Arthas 主要利用这一特性, Arths 的诊断功能是对性能有影响的,只能单独选择一两台服务器开启. 并且故障诊断需要故障现场,不能重启应用, 因此热部署特性对于 Arthas 来说就至关重要了.</li>
+</ol>
+<h1 id="Java-Agent-工作原理简介"><a href="#Java-Agent-工作原理简介" class="headerlink" title="Java Agent 工作原理简介"></a>Java Agent 工作原理简介</h1><h2 id="Java-Agent-的启动"><a href="#Java-Agent-的启动" class="headerlink" title="Java Agent 的启动"></a>Java Agent 的启动</h2><p>Java Agent 的启动有两种方式:</p>
+<ol>
+<li>在启动 Java 应用时,在 JVM 参数中添加 <code>-javaagent:/path/to/your_agent_name.jar</code>.下文简称 JVM 参数方式.</li>
+<li>在运行时,通过 com.sun.tools.attach.VirtualMachine#loadAgent(java.lang.String) 动态加载 Java Agent. 下文简称运行时方式.</li>
+</ol>
+<blockquote>
+<p>这里具体说明下运行时方式的启动: 假设我们有一个 biz.jar 是我们的业务应用,  agent.jar 是我们的 Java Agent. 我们可以在启动一个 attach.jar ,来将 agent.jar  attach 到 biz.jar 上, 整个过程是不需要修改 biz.jar 的.</p>
+</blockquote>
+<p>下面我们会从几个方面来比较这两种启动方式:</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">JVM 参数方式</th>
+<th align="left">运行时方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">启动时机</td>
+<td align="left">main函数执行之前</td>
+<td align="left">应用运行时</td>
+</tr>
+<tr>
+<td align="left">执行线程</td>
+<td align="left">main 线程</td>
+<td align="left">AttachListener 线程</td>
+</tr>
+<tr>
+<td align="left">入口函数</td>
+<td align="left">premain()</td>
+<td align="left">agentmain()</td>
+</tr>
+<tr>
+<td align="left">ClassLoader</td>
+<td align="left">AppClassLoader</td>
+<td align="left">AppClassLoader</td>
+</tr>
+</tbody></table>
+<h3 id="Java-Agent-启动代码分析"><a href="#Java-Agent-启动代码分析" class="headerlink" title="Java Agent 启动代码分析"></a>Java Agent 启动代码分析</h3><p>在 JVM 接收到相关的参数之后, 就会调用 InstrumentationImpl 对象执行 agent 逻辑. JVM 方式会调用 InstrumentationImpl 的 loadClassAndCallPremain 方法, 运行时方式会调用 loadClassAndCallAgentmain 方法.这两个方法底层都是调用  loadClassAndStartAgent 方法:  </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// WARNING: the native code knows the name &amp; signature of this method</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span></span><br><span class="line"><span class="title function_">loadClassAndCallPremain</span><span class="params">(    String  classname,</span></span><br><span class="line"><span class="params">                            String  optionsString)</span></span><br><span class="line">        <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line"></span><br><span class="line">    loadClassAndStartAgent( classname, <span class="string">&quot;premain&quot;</span>, optionsString );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// WARNING: the native code knows the name &amp; signature of this method</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span></span><br><span class="line"><span class="title function_">loadClassAndCallAgentmain</span><span class="params">(  String  classname,</span></span><br><span class="line"><span class="params">                            String  optionsString)</span></span><br><span class="line">        <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line"></span><br><span class="line">    loadClassAndStartAgent( classname, <span class="string">&quot;agentmain&quot;</span>, optionsString );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 loadClassAndStartAgent 方法中, 首先获取 AppClassLoader ,然后通过 AppClassLoader 加载 AgentClass 类.最后通过反射调用 premain 或者 agentmain 方法.</p>
+<p>因此我们可以得出一个结论: <strong>除了上文表格中的不同点, JVM 方式 和 运行时方式启动的 Java Agent 没什么区别.</strong></p>
+<p>agentmain 和 premain 有一个参数是 Instrumentation , Instrumentationimpl 会将自身传递给 agentmain&#x2F;premian 方法.</p>
+<h2 id="实现字节码修改-–-Instrumentation-简介"><a href="#实现字节码修改-–-Instrumentation-简介" class="headerlink" title="实现字节码修改 – Instrumentation 简介"></a>实现字节码修改 – Instrumentation 简介</h2><p>Instrumentation 是 agentmain&#x2F;premain 的入参, 通过这个类, 可以实现字节码修改.</p>
+<p>Instrumentation 对于字节码的修改,可以分为两种形式:</p>
+<ol>
+<li>transform: 修改字节码,会在字节码里面掺私货.给类加切面用这种方式.</li>
+<li>redefine: 重新定义字节码, 推倒重来. 直接修改类的业务逻辑用这种方式.</li>
+</ol>
+<p>redeine 是 java1.5 引入的, 而 transform 是 java 1.6 引入的. transform 的使用更方便,因此我推荐使用 transform 而不用使用 redeine.</p>
+<p>transform 又分为两类:</p>
+<ol>
+<li>transform: 在类第一次加载时执行</li>
+<li>retransform: 调用 Instrumentation 的 retransformClasses 方法手动执行.</li>
+</ol>
+<h3 id="transform-方法"><a href="#transform-方法" class="headerlink" title="transform 方法"></a>transform 方法</h3><p>我们可以向 <code>Instrumentation</code> 中注册 <code>Transformer</code>, 当一个类被加载或者被调用 <code>retransform</code> 时, Transformer 的 <code>transform</code> 方法会被调用. <code>transform</code> 接收一个用来表示 classFile 的二进制数组, 同时返回一个新的表示类的二进制数组.</p>
+<p>可以用 ASM ,ByteBuddy 等框架来读取,修改这个二进制数组并返回. 这样, 一次代码增强就完成了</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/11/23/debug-jvm-on-mac/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -493,7 +784,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -763,7 +1054,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-07 06:01:30" itemprop="dateModified" datetime="2022-12-07T06:01:30+00:00">2022-12-07</time>
+                <time title="Modified: 2022-12-08 09:47:29" itemprop="dateModified" datetime="2022-12-08T09:47:29+00:00">2022-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -879,7 +1170,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
