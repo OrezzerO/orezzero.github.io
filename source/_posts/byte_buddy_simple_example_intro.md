@@ -4,6 +4,7 @@ date: 2022-12-06 17:08:06
 categories:
 - CS
 - Java
+- javaagent
 tags:
 - ByteBuddy
 - java
@@ -99,7 +100,8 @@ protected TypeWriter<T> toTypeWriter(TypePool typePool) {
     MethodRegistry.Compiled methodRegistry = constructorStrategy   // constructorStrategy 规定了如何构造新类的构造函数, ByteBuddy 遵循约定优于配置的原则, constructorStrategy 有一个默认值,这里我们不展开讨论.
             .inject(instrumentedType, this.methodRegistry) // inject 将构造函数如何构造的 handler 插入 methodRegistry,并返回这个 methodRegistry
             .prepare(applyConstructorStrategy(instrumentedType), // prepare 方法会会根据配置 (也就是上文 method 和 intercept 方法), 将改造 echo 方法的 handler 加入 methodRegistry.
-            // 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named("echo")) 找到需要被增强的方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value("B")) 插入到 methodRegistry
+            // 具体操作是: 在需要被怎强的类 EchoA 中, 通过 过滤器(ElementMatchers.named("echo")) 找到需要被增强的
+            方法 echo , 然后将这个方法和这个方法如何被增强 (返回固定值 value FixedValue.value("B")) 插入到 methodRegistry
                     methodGraphCompiler,
                     typeValidation,
                     visibilityBridgeStrategy,

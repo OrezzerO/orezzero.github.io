@@ -3,11 +3,10 @@ title: 使用 SSH 实现远程登录内网机器 (MacOS)
 date: 2022-11-28 17:12:32
 categories:
 - CS
-- Linux
+- Common
 tags:
 - ssh
 - network
-- todo
 ---
 
 # 背景

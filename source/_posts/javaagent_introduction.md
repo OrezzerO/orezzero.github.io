@@ -1,7 +1,13 @@
 ---
 title: Java Agent 原理简介
 date: 2022-11-24 15:02:39
+categories:
+- CS
+- Java
+- javaagent
 tags:
+- java
+- javaagent
 ---
 
 # Java Agent 是什么
@@ -21,7 +27,6 @@ Java Agent 是一种可以动态修改 Java 类字节码的技术.
 
 
 # Java Agent 工作原理简介
-todo 写一下这一节的提纲
 ## Java Agent 的启动
 Java Agent 的启动有两种方式:
 1. 在启动 Java 应用时,在 JVM 参数中添加 `-javaagent:/path/to/your_agent_name.jar`.下文简称 JVM 参数方式.
@@ -41,7 +46,7 @@ Java Agent 的启动有两种方式:
 
 
 ### Java Agent 启动代码分析
-在 JVM 接收到相关的参数之后, 就会调用 InstrumentationImpl 执行 agent. JVM 方式会调用 InstrumentationImpl 的 loadClassAndCallPremain 方法, 运行时方式会调用 loadClassAndCallAgentmain 方法.这两个方法底层都是调用  loadClassAndStartAgent 方法:  
+在 JVM 接收到相关的参数之后, 就会调用 InstrumentationImpl 对象执行 agent 逻辑. JVM 方式会调用 InstrumentationImpl 的 loadClassAndCallPremain 方法, 运行时方式会调用 loadClassAndCallAgentmain 方法.这两个方法底层都是调用  loadClassAndStartAgent 方法:  
 
 ``` java
 // WARNING: the native code knows the name & signature of this method
@@ -86,32 +91,7 @@ transform 又分为两类:
 2. retransform: 调用 Instrumentation 的 retransformClasses 方法手动执行.
 
 
-classLoader 加载类的顺序.
+### transform 方法
+我们可以向 `Instrumentation` 中注册 `Transformer`, 当一个类被加载或者被调用 `retransform` 时, Transformer 的 `transform` 方法会被调用. `transform` 接收一个用来表示 classFile 的二进制数组, 同时返回一个新的表示类的二进制数组.
 
-
-### transform
-
-
-
-
-
-### transform时间
-
-
-<!--
-说明一下类加载机制, instrumentation 回调 transform 的时机
-
-说明下 retransform 和 redefine 的区别和联系
-
-retransform 的流程
-
-
- -->
-
-
-
-
-
-
-
-# 参考文档
+可以用 ASM ,ByteBuddy 等框架来读取,修改这个二进制数组并返回. 这样, 一次代码增强就完成了
