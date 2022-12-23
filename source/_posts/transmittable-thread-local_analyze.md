@@ -14,7 +14,7 @@ tags:
 
 
 # 相关文章
-网上有很多 TTL 的原理分析/实践. TTL 坐着在 [这里](https://github.com/alibaba/transmittable-thread-local/issues/123) 做了一个汇总. 我这篇文章就不深入细节展开了, 只写一点我自己对 TTL 笼统的理解.
+网上有很多 TTL 的原理分析/实践. TTL 作者在 [这里](https://github.com/alibaba/transmittable-thread-local/issues/123) 做了一个汇总. 我这篇文章就不深入细节展开了, 只写一点我自己对 TTL 笼统的理解.
 
 
 # 分析
