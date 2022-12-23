@@ -169,6 +169,191 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/19/skywalking_java_api/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/13081689?v=4">
+      <meta itemprop="name" content="Orez">
+      <meta itemprop="description" content="分享我的日常技术博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Orez 的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/12/19/skywalking_java_api/" class="post-title-link" itemprop="url">SkyWalking-java 简介</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-12-19 16:29:59" itemprop="dateCreated datePublished" datetime="2022-12-19T16:29:59+00:00">2022-12-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/" itemprop="url" rel="index"><span itemprop="name">CS</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>最近在调研跨线程 trace, 调研了跨线程 skywalking-java (skywalking 的 java 客户端) 的跨线程 trace 实现.</p>
+<p>本文的内容包括:</p>
+<ol>
+<li>skywalking-java api 的简单使用</li>
+<li>skywalking-java api 重要概念及对应的实现</li>
+<li>skywalking-java 跨线程 trace 是如何实现的</li>
+<li>skywalking 的瓶颈以及我遇到的问题.</li>
+</ol>
+<p>前置知识:</p>
+<h1 id="Skywalking-java-api-的简单使用"><a href="#Skywalking-java-api-的简单使用" class="headerlink" title="Skywalking-java api 的简单使用"></a>Skywalking-java api 的简单使用</h1><h2 id="普通用户API"><a href="#普通用户API" class="headerlink" title="普通用户API"></a>普通用户API</h2><p>官方文档中 <a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/skywalking-java/v8.13.0/en/setup/service-agent/java-agent/application-toolkit-trace/">Tracing APIs</a> 一节中有用户API详细的说明. 简单来说,加一个 <code>@Tracer</code> 注解就能完成一般用户的需求:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Trace</span></span><br><span class="line"><span class="keyword">public</span> User <span class="title function_">methodYouWantToTrace</span><span class="params">(String param1, String param2)</span> &#123;</span><br><span class="line">    <span class="comment">// ActiveSpan.setOperationName(&quot;Customize your own operation name, if this is an entry span, this would be an endpoint name&quot;);</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="中间件用户-API"><a href="#中间件用户-API" class="headerlink" title="中间件用户 API"></a>中间件用户 API</h2><p>对于普通用户来说,上面这个接口已经够用了, 但对于中间件用户来说, 要需要深入看下非切面的API:</p>
+<h3 id="Span-分类"><a href="#Span-分类" class="headerlink" title="Span 分类"></a>Span 分类</h3><p><a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/skywalking-java/v8.13.0/en/setup/service-agent/java-agent/java-plugin-development-guide/">Skywlking 中将 Span 分为三类</a> :</p>
+<ol>
+<li><strong>EntrySpan</strong>: 代表一个服务提供者.</li>
+<li><strong>LocalSpan</strong>: 代表一个普通方法.注意,它既不代表一个服务提供者, 也不代表服务消费者.</li>
+<li><strong>ExitSpan</strong>: 代表一份服务消费者</li>
+</ol>
+<p>创建上面三个 Span 的方法分别为 <a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-agent-core/src/main/java/org/apache/skywalking/apm/agent/core/context/ContextManager.java">ContextManager.java</a> 中的:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> AbstractSpan <span class="title function_">createEntrySpan</span><span class="params">(String endpointName, ContextCarrier carrier)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> AbstractSpan <span class="title function_">createLocalSpan</span><span class="params">(String endpointName)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> AbstractSpan <span class="title function_">createExitSpan</span><span class="params">(String endpointName, ContextCarrier carrier, String remotePeer)</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>上文中 <code>@Tracer</code> 注解生成的就是 LocalSpan</p>
+</blockquote>
+<h3 id="跨应用传递"><a href="#跨应用传递" class="headerlink" title="跨应用传递"></a>跨应用传递</h3><p>APM 需要将不同应用间的 Span 串联起来, 通常来说是在请求中加上 APM 相关的信息来实现的.<br>Skywalking 的实现直接看官方文档 <a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/skywalking-java/v8.13.0/en/setup/service-agent/java-agent/java-plugin-development-guide/#contextcarrier">ContextCarrier</a></p>
+<h3 id="Span-的操作"><a href="#Span-的操作" class="headerlink" title="Span 的操作"></a>Span 的操作</h3><p>可以通过 <a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/skywalking-java/v8.13.0/en/setup/service-agent/java-agent/java-plugin-development-guide/#abstractspan">AbstractSpan 接口</a> 来操作 Span ,向其中添加信息. 可以通过 <a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/skywalking-java/v8.13.0/en/setup/service-agent/java-agent/java-plugin-development-guide/#abstractspan">Async Span APIs</a> 来操控异步 Span.</p>
+<h3 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h3><p>SkyWalking-java 使用 java agent 在运行时动态修改字节码来做到埋点的注入. 不同的中间件需要实现一个 SkyWalking 插件才能接入. 这部分内容可以参考 <a href="https://orezzero.github.io/2022/12/08/bytebuddy_agent_skywalking/">Byte Buddy Agent 初探–以 SkyWalking-java 为例</a> 中 SkyWalking-java 简要分析 一节.</p>
+<p>客户端埋点代码包含如下逻辑:</p>
+<ol>
+<li>获取请求信息</li>
+<li>构造 ExitSpan</li>
+<li>向请求中注入 SkyWalking header</li>
+</ol>
+<p>服务端包含如下逻辑:</p>
+<ol>
+<li>获取请求信息</li>
+<li>构造 EntrySpan</li>
+<li>向请求中的 SkyWalking header 提取出来, 注入到本地的 <code>ContextCarrier</code> 中</li>
+</ol>
+<p>可以参考这两个文件: <a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcConsumerInterceptor.java">SOFA RPC 客户端埋点</a> 和 <a target="_blank" rel="noopener" href="https://github.com/apache/skywalking-java/blob/main/apm-sniffer/apm-sdk-plugin/sofarpc-plugin/src/main/java/org/apache/skywalking/apm/plugin/sofarpc/SofaRpcProviderInterceptor.java">SOFA RPC 服务端埋点</a></p>
+<h1 id="skywalking-java-api-重要概念及对应的实现"><a href="#skywalking-java-api-重要概念及对应的实现" class="headerlink" title="skywalking-java api 重要概念及对应的实现"></a>skywalking-java api 重要概念及对应的实现</h1><h2 id="Trace-相关概念"><a href="#Trace-相关概念" class="headerlink" title="Trace 相关概念"></a>Trace 相关概念</h2><p><a target="_blank" rel="noopener" href="https://skywalking.apache.org/docs/main/v9.2.0/en/protocols/trace-data-protocol-v3/">Trace Data Protocol v3 </a> 描述了SkyWalking 客户端和服务端之间的通信协议. 其中将链路追踪划分为三个层次:</p>
+<ol>
+<li>Trace: 代表整个链路</li>
+<li>Segment: 代表一个进程(应用)中所有的 Span 集合</li>
+<li>Span: 代表一个操作,比如读取一次DB</li>
+</ol>
+<p>分别看下这三个对象的唯一标识是怎么产生的, 就能比较好理解他们分别代表什么维度:</p>
+<p><strong>Trace Id</strong> <br/><br>Trace Id 通过 <code>GlobalIdGenerator.generate()</code> 产生,包含三个部分:</p>
+<ol>
+<li>PROCESS_ID: 代表应用程序实例 ID</li>
+<li><code>Thread.currentThread().getId()</code>: 代表线程 ID</li>
+<li>THREAD_ID_SEQUENCE: 包含两个部分 1) 以毫秒记的时间戳 2) 线程级别的 0 到 9999 的序号</li>
+</ol>
+<p>可以看出, Trace Id 是 实例维度+线程维度+毫秒维度+序号维度 组成的.</p>
+<p><strong>注意</strong>: Trace Id 是会通过请求传递到上游服务的,如果下游传递了 Trace Id 给上游, 上游会继续使用这个 Trace Id</p>
+<p><strong>Segment Id</strong> <br/><br>Segment Id 的生成算法和 Trace Id 是一样的.</p>
+<p><strong>Span Id</strong> <br/><br>SpanId 是一个在 <code>TracingContext</code> 中维护的,从 0 开始的序列.</p>
+<p>注意: 这里的 <code>TracingContext</code> 是一个 ThreadLocal 变量, 生命周期和一个 Segment 想通.</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p><strong>一些类和数据结构</strong></p>
+<ol>
+<li><strong>Span</strong>: 保存了 spanId,parentSpanId,tags 等标签, 用来表示一个操作.</li>
+<li><strong>Segment</strong>: 保存了 traceSegmentId,relatedGlobalTraceId, Span 数组 等信息, 用来表示一组同线程同 traceId 的 Span 集合</li>
+<li><strong>TracingContext</strong>: 用来操作 Segment 和 Span 的工具类,持有 TraceSegment 引用, 维护了一个 <code>List&lt;Span&gt;</code>  表示的栈. TracingContext 和单个线程对应, 单个TracingContext中只保存该线程对应的 Segment 和 Span.</li>
+<li><strong>ContextManager</strong>: TracingContext 的控制类, 持有 TracingContext 的 ThreadLocal 引用. ContextManager 中的静态方法会</li>
+</ol>
+<p>这是一个比较简单模式: 用户使用 <code>ContextManager</code> 来控制 <code>TracingContext</code>. <code>TracingContext</code> 来生成 <code>Segment</code> 和 <code>Span</code> 对象, 并将他们组合到一起.</p>
+<!-- todo 看看要不要举个例子 -->
+
+
+<h1 id="跨线程-Trace-的实现"><a href="#跨线程-Trace-的实现" class="headerlink" title="跨线程 Trace 的实现"></a>跨线程 Trace 的实现</h1><p>跨线程Trace 分为两种情况:</p>
+<ol>
+<li>单个 Span 跨线程. 也就是说, 同一个Span 的 <code>start</code> 和 <code>stop</code> 操作在不同的线程中</li>
+<li>整体 Trace 跨线程. 也就是说”父子Span”在不同的线程中.</li>
+</ol>
+<p>我们分别讨论这两种情况.</p>
+<h2 id="单-Span-跨线程"><a href="#单-Span-跨线程" class="headerlink" title="单 Span 跨线程"></a>单 Span 跨线程</h2><p>单 Span 跨线程是指同一个Span 的 <code>start</code> 和 <code>stop</code> 操作在不同的线程中. 直接上代码:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">AbstractSpan</span> <span class="variable">mySpan</span> <span class="operator">=</span> ContextManager.createEntrySpan(<span class="string">&quot;mySpan&quot;</span>);</span><br><span class="line">        <span class="type">Runnable</span> <span class="variable">runnable</span> <span class="operator">=</span> () -&gt; &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 3. Propagate the span to any other thread.</span></span><br><span class="line">            <span class="comment">// 4. Once the above steps are all set, call #asyncFinish in any thread.</span></span><br><span class="line">            mySpan.asyncFinish();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="comment">// 1. Call #prepareForAsync in the original context.</span></span><br><span class="line">        mySpan.prepareForAsync();</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">Thread</span>(runnable).start();</span><br><span class="line">        <span class="comment">// 2. Run ContextManager#stopSpan in the original context when your job in the current thread is complete.</span></span><br><span class="line">        ContextManager.stopSpan();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面这段代码, 在Main线程中创建了了一个 Span ,但在子线程中才结束这个 Span. 整个过程如下:</p>
+<h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>整个单 Span 跨线程的过程分为四个阶段,我们分别分析:</p>
+<h4 id="在原始上下文中调用-prepareForAsync-方法"><a href="#在原始上下文中调用-prepareForAsync-方法" class="headerlink" title="在原始上下文中调用 prepareForAsync 方法"></a>在原始上下文中调用 prepareForAsync 方法</h4><p><code>prepareForAsync</code> 方法是 Span 的方法. 它会标记这个 Span 处于异步模式, 同时在方法内部调用 <code>ContextManager#awaitFinishAsync</code> 方法. 上下文中会通过<code>asyncSpanCounter</code>字段记录当前上下文有多少 Span 处于异步模式中.</p>
+<h4 id="在原始方法中调用-stopSpan-方法"><a href="#在原始方法中调用-stopSpan-方法" class="headerlink" title="在原始方法中调用 stopSpan 方法"></a>在原始方法中调用 stopSpan 方法</h4><p>由于上一步调用了 <code>prepareForAsync</code>, <code>stopSpan</code> 方法不会直接结束,而是<strong>先</strong>判断当前上下文中<strong>asyncSpanCounter</strong>是否为0.为0的话结束,非0的话不结束.</p>
+<h4 id="将-Span-对象传递到其他线程中"><a href="#将-Span-对象传递到其他线程中" class="headerlink" title="将 Span 对象传递到其他线程中"></a>将 Span 对象传递到其他线程中</h4><p>可以使用闭包传递,这很好理解,不做说明了.</p>
+<h3 id="在子线程中嗲用-asyncFinish"><a href="#在子线程中嗲用-asyncFinish" class="headerlink" title="在子线程中嗲用 asyncFinish"></a>在子线程中嗲用 asyncFinish</h3><p>调用 asyncFinish 会通知该 Span 的上下文, 减少<code>asyncSpanCounter</code>数量.并且再次尝试结束Span,如果此时<strong>asyncSpanCounter</strong>为0,就结束Span,否则不结束.</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在单个 Span 跨线程的场景下, 跨线程的 Span 还是原来的对象, 它持有原来线程 <code>Context</code> 的引用, traceId 等相关信息都没有发生改变.</p>
+<h2 id="整体-Trace-跨线程"><a href="#整体-Trace-跨线程" class="headerlink" title="整体 Trace 跨线程"></a>整体 Trace 跨线程</h2><p>整体 Trace 跨线程是说”父子Span”在不同的线程中.我们直接看代码:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main2</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">AbstractSpan</span> <span class="variable">mySpan</span> <span class="operator">=</span> ContextManager.createExitSpan(<span class="string">&quot;parent&quot;</span>, <span class="string">&quot;childThread&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Runnable</span> <span class="variable">runnable</span> <span class="operator">=</span> () -&gt; &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">Thread</span>(<span class="keyword">new</span> <span class="title class_">RunnableWrapper</span>(runnable)).start();</span><br><span class="line">        ContextManager.stopSpan(mySpan);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">RunnableWrapper</span> <span class="keyword">implements</span> <span class="title class_">Runnable</span>, EnhancedInstance &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> Object skyWalkingDynamicField;</span><br><span class="line">        <span class="keyword">private</span> Runnable runnable;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> <span class="title function_">RunnableWrapper</span><span class="params">(Runnable runnable)</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (ContextManager.isActive()) &#123;</span><br><span class="line">                setSkyWalkingDynamicField(ContextManager.capture());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">this</span>.runnable = runnable;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="type">AbstractSpan</span> <span class="variable">span</span> <span class="operator">=</span> ContextManager.createLocalSpan(<span class="string">&quot;runnable.run&quot;</span>);</span><br><span class="line">            span.setComponent(ComponentsDefine.JDK_THREADING);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">final</span> <span class="type">Object</span> <span class="variable">storedField</span> <span class="operator">=</span> getSkyWalkingDynamicField();</span><br><span class="line">            <span class="keyword">if</span> (storedField != <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="keyword">final</span> <span class="type">ContextSnapshot</span> <span class="variable">contextSnapshot</span> <span class="operator">=</span> (ContextSnapshot) storedField;</span><br><span class="line">                ContextManager.continued(contextSnapshot);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                runnable.run();</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                ContextManager.stopSpan();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> Object <span class="title function_">getSkyWalkingDynamicField</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> skyWalkingDynamicField;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setSkyWalkingDynamicField</span><span class="params">(Object value)</span> &#123;</span><br><span class="line">            <span class="built_in">this</span>.skyWalkingDynamicField = value;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码是将<code>RunnableInstrumentation</code> 的代码增强逻辑展开后得来的(有简化).整体 Trace 跨线程主有两个主要步骤:</p>
+<ol>
+<li>创建 RunnableWrapper 对象的时候, 在<strong>构造函数</strong>中,将当前线程的 <code>ContextSnapshot</code> 设置到 RunnableWrapper 的 skyWalkingDynamicField对象中.</li>
+<li>在子线程执行 <code>run</code> 方法时, 创建一个新的 <code>Span</code>, 并将父线程的 <code>contextSnapshot</code> 当做参数传递给 <code>continued</code> 方法.</li>
+</ol>
+<p>ContextSnapshot 的构造如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> ContextSnapshot <span class="title function_">capture</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ContextSnapshot</span> <span class="variable">snapshot</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ContextSnapshot</span>(</span><br><span class="line">        segment.getTraceSegmentId(),  <span class="comment">// segmentId</span></span><br><span class="line">        activeSpan().getSpanId(),     <span class="comment">// spanId</span></span><br><span class="line">        getPrimaryTraceId(),          <span class="comment">// traceId</span></span><br><span class="line">        primaryEndpoint.getName(),    <span class="comment">// parentEndpoint</span></span><br><span class="line">        <span class="built_in">this</span>.correlationContext,     </span><br><span class="line">        <span class="built_in">this</span>.extensionContext</span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">return</span> snapshot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>continued</code> 方法如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Continue the context from the given snapshot of parent thread.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> snapshot from &#123;<span class="doctag">@link</span> #capture()&#125; in the parent thread. Ref to &#123;<span class="doctag">@link</span> AbstractTracerContext#continued(ContextSnapshot)&#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">continued</span><span class="params">(ContextSnapshot snapshot)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (snapshot.isValid()) &#123;</span><br><span class="line">        <span class="type">TraceSegmentRef</span> <span class="variable">segmentRef</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TraceSegmentRef</span>(snapshot);</span><br><span class="line">        <span class="built_in">this</span>.segment.ref(segmentRef);</span><br><span class="line">        <span class="built_in">this</span>.activeSpan().ref(segmentRef);</span><br><span class="line">        <span class="built_in">this</span>.segment.relatedGlobalTrace(snapshot.getTraceId());</span><br><span class="line">        <span class="built_in">this</span>.correlationContext.continued(snapshot);</span><br><span class="line">        <span class="built_in">this</span>.extensionContext.continued(snapshot);</span><br><span class="line">        <span class="built_in">this</span>.extensionContext.handle(<span class="built_in">this</span>.activeSpan());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>continued</code> 方法通过 <code>ContextSnapshot</code> 构造 <code>TraceSegmentRef</code>,让当前线程的 Segment 和 Span 引用到 <code>TraceSegmentRef</code>, 从而建立起了两个线程的联系. 当这两个线程的 Segment 都完成之后, 就会被发送到 SkyWalking 服务端, 服务端可以根据这两个 Segment 之间的关系建立起联系.</p>
+<h1 id="我遇到的问题"><a href="#我遇到的问题" class="headerlink" title="我遇到的问题"></a>我遇到的问题</h1><p>我再做一个精细化耗时分析的程序,它可以实现跨线程的精细化耗时分析. 举个RPC的例子: 它会记录 IO 线程中, 请求到达的时间&#x2F;IO 线程处理完成请求的时间; 然后将这些数据传递给业务线程, 业务线程继续记录 RPC 内部处理时间, 业务耗时等.</p>
+<p>现在遇到的<strong>问题</strong>是:  在多层线程池嵌套的场景, 如何确定这个 Trace 的结束时间?</p>
+<p>想象这么一个场景:<br>调用一个 RPC 接口, 这个 RPC 接口会再另外开启 5 条线程执行批量数据库操作,然后不等待数据库操作返会结果, RPC 提前返会.</p>
+<p>在这种场景下,供涉及七条线程: IO 线程, RPC 业务线程, 批量操作5条线程.这七条线程只知道自己的 Span 状态, 无法得知其他 Span 的状态, 也就没办法知道整个事务什么时候结束(本线程事务结束的时候, 并不清楚其他线程的事务是否结束).</p>
+<p>对于 SkyWalking, 它没有纠结整体事务有没有结束. 每个线程只关心自己的 Segment 是否结束, 结束就上报给 SkyWalking 服务端. 在上面这个例子中, 这七条线程的 Segment 是有关系的, skyWalking 可以根据这些关系, 再将他们组合起来, 统一展示.</p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://opentracing.io/specification/">https://opentracing.io/specification/</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://orezzero.github.io/2022/12/15/transmittable-thread-local_analyze/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -192,10 +377,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2022-12-15 15:11:25 / Modified: 07:12:01" itemprop="dateCreated datePublished" datetime="2022-12-15T15:11:25+00:00">2022-12-15</time>
+              <time title="Created: 2022-12-15 15:11:25" itemprop="dateCreated datePublished" datetime="2022-12-15T15:11:25+00:00">2022-12-15</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -222,7 +413,7 @@
 
       
           <h1 id="Alibaba-transmittable-thread-local-是什么"><a href="#Alibaba-transmittable-thread-local-是什么" class="headerlink" title="Alibaba transmittable-thread-local 是什么"></a>Alibaba transmittable-thread-local 是什么</h1><p><code>TransmittableThreadLocal(TTL)</code>：在使用线程池等会池化复用线程的执行组件情况下，提供ThreadLocal值的传递功能，解决异步执行时上下文传递的问题。</p>
-<h1 id="相关文章"><a href="#相关文章" class="headerlink" title="相关文章"></a>相关文章</h1><p>网上有很多 TTL 的原理分析&#x2F;实践. TTL 坐着在 <a target="_blank" rel="noopener" href="https://github.com/alibaba/transmittable-thread-local/issues/123">这里</a> 做了一个汇总. 我这篇文章就不深入细节展开了, 只写一点我自己对 TTL 笼统的理解.</p>
+<h1 id="相关文章"><a href="#相关文章" class="headerlink" title="相关文章"></a>相关文章</h1><p>网上有很多 TTL 的原理分析&#x2F;实践. TTL 作者在 <a target="_blank" rel="noopener" href="https://github.com/alibaba/transmittable-thread-local/issues/123">这里</a> 做了一个汇总. 我这篇文章就不深入细节展开了, 只写一点我自己对 TTL 笼统的理解.</p>
 <h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><h2 id="InheritableThreadLocal-原理"><a href="#InheritableThreadLocal-原理" class="headerlink" title="InheritableThreadLocal 原理"></a>InheritableThreadLocal 原理</h2><p>在创建 <code>Thread</code> 对象时 ,会复制复父线程的 <code>InheritableThreadLocal</code> 到新的 <code>Thread</code> 对象, 通过这种方式父线程的 <code>ThreadLocal</code> 传递给子线程. 这种方式有如下问题:</p>
 <ul>
 <li>线程池场景下,无法做到 ThreadLocal 的传递</li>
@@ -286,7 +477,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -427,7 +618,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -538,7 +729,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -621,7 +812,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -724,7 +915,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -876,7 +1067,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1146,7 +1337,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-12-15 07:12:01" itemprop="dateModified" datetime="2022-12-15T07:12:01+00:00">2022-12-15</time>
+                <time title="Modified: 2022-12-23 08:20:58" itemprop="dateModified" datetime="2022-12-23T08:20:58+00:00">2022-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1262,7 +1453,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
