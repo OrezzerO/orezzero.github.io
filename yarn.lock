@@ -544,9 +544,9 @@ hexo-generator-category@^2.0.0:
   dependencies:
     hexo-pagination "3.0.0"
 
-hexo-generator-index@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/hexo-generator-index/-/hexo-generator-index-3.0.0.tgz"
+hexo-generator-index@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/hexo-generator-index/-/hexo-generator-index-4.0.0.tgz#2f20cf9d231db30edbccd5be32c92c8aeb5d6d63"
   dependencies:
     hexo-pagination "3.0.0"
 
